@@ -54,6 +54,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
+import com.kolich.aws.signing.algorithms.HMACSHA1Signer;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.aws.transport.SortableBasicNameValuePair;
 import com.kolich.common.date.RFC822DateFormat;
@@ -62,6 +63,14 @@ public final class S3Signer extends AbstractAwsSigner {
 	
 	public S3Signer(final AwsCredentials credentials, final AwsSigner signer) {
 		super(credentials, signer);
+	}
+	
+	public S3Signer(final AwsCredentials credentials) {
+		this(credentials, new HMACSHA1Signer());
+	}
+	
+	public S3Signer(final String key, final String secret) {
+		this(new AwsCredentials(key, secret));
 	}
 
 	/**

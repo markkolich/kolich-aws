@@ -102,6 +102,11 @@ public final class S3ClientImpl extends AbstractAwsService implements S3Client {
 		client_ = client;
 	}
 	
+	public S3ClientImpl(final HttpClient client, final String key,
+		final String secret) {
+		this(client, new S3Signer(key, secret));
+	}
+	
 	private abstract class AwsS3HttpClosure<S> extends AwsBaseHttpClosure<S> {
 		private final String bucketName_;
 		public AwsS3HttpClosure(final HttpClient client, final int expectStatus,
@@ -121,30 +126,28 @@ public final class S3ClientImpl extends AbstractAwsService implements S3Client {
 			return null; // Meh.
 		}
 		public final Either<HttpFailure,S> head(final String... path) {
-			return super.head(buildPath(S3_DEFAULT_ENDPOINT, path));
+			return super.head(buildPath(path));
 		}
 		public final Either<HttpFailure,S> get(final String... path) {
-			return super.get(buildPath(S3_DEFAULT_ENDPOINT, path));
+			return super.get(buildPath(path));
 		}
 		public final Either<HttpFailure,S> get() {
 			return get((String[])null);
 		}
 		public final Either<HttpFailure,S> put(final String... path) {
-			return super.put(buildPath(S3_DEFAULT_ENDPOINT, path));
+			return super.put(buildPath(path));
 		}
 		public final Either<HttpFailure,S> put() {
 			return put((String[])null);
 		}
 		public final Either<HttpFailure,S> delete(final String... path) {
-			return super.delete(buildPath(S3_DEFAULT_ENDPOINT, path));
+			return super.delete(buildPath(path));
 		}
 		public final Either<HttpFailure,S> delete() {
 			return delete((String[])null);
 		}
-		private final String buildPath(final String apiEndpoint,
-			final String... path) {
+		private final String buildPath(final String... path) {
 			final StringBuilder sb = new StringBuilder(SLASH_STRING);
-			sb.append(apiEndpoint);
 			if(path != null) {
 				sb.append(SLASH_STRING).append(urlEncode(
 					varargsToPathString(path)));
