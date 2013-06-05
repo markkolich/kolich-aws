@@ -26,6 +26,8 @@
 
 package com.kolich.aws.services;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.apache.http.client.methods.HttpRequestBase;
 
 import com.kolich.aws.signing.AwsCredentials;
@@ -47,6 +49,8 @@ public abstract class AbstractAwsSigner {
 	
 	public AbstractAwsSigner(final AwsCredentials credentials,
 		final AwsSigner signer) {
+		checkNotNull(credentials, "AWS credentials cannot be null.");
+		checkNotNull(signer, "AWS signer cannot be null.");
 		credentials_ = credentials;
 		signer_ = signer;
 	}
