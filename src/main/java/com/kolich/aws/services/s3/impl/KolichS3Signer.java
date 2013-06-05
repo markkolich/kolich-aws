@@ -31,6 +31,8 @@ import static com.kolich.aws.transport.AwsHeaders.AMAZON_PREFIX;
 import static com.kolich.aws.transport.AwsHeaders.S3_ALTERNATE_DATE;
 import static com.kolich.aws.transport.SortableBasicNameValuePair.sortParams;
 import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
+import static java.util.Collections.unmodifiableMap;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR_UNIX;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.apache.http.HttpHeaders.CONTENT_MD5;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
@@ -38,7 +40,6 @@ import static org.apache.http.HttpHeaders.DATE;
 import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,7 +63,11 @@ import com.kolich.common.date.RFC822DateFormat;
 
 public final class KolichS3Signer extends AbstractAwsSigner {
 	
-	public KolichS3Signer(final AwsCredentials credentials, final AwsSigner signer) {
+	private static final String APPLICATION_FORM_URLENCODED_TYPE =
+		APPLICATION_FORM_URLENCODED.toString();
+	
+	public KolichS3Signer(final AwsCredentials credentials,
+		final AwsSigner signer) {
 		super(credentials, signer);
 	}
 	
@@ -92,9 +97,9 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     	// Add a Date header to the request.
     	request.addHeader(DATE, RFC822DateFormat.format(new Date()));
     	// Only add a Content-Type header to the request if one is not
-    	// already there.  AWS expects something useful here.
+    	// already there. AWS expects something useful here.
     	if(request.getFirstHeader(CONTENT_TYPE) == null) {
-    		request.addHeader(CONTENT_TYPE, APPLICATION_FORM_URLENCODED.toString());
+    		request.addHeader(CONTENT_TYPE, APPLICATION_FORM_URLENCODED_TYPE);
     	}
     	final String toSign = getS3CanonicalString(request);
 		final String signature = signer_.sign(credentials_, toSign);
@@ -122,7 +127,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     	// Start with the empty string ("").
     	final StringBuilder buf = new StringBuilder();
     	// Next is the HTTP verb and a newline.
-        buf.append(request.getMethod() + "\n");
+        buf.append(request.getMethod() + LINE_SEPARATOR_UNIX);
         // Add all interesting headers to a list, then sort them.
         // "Interesting" is defined as Content-MD5, Content-Type, Date,
         // and x-amz-... headers.
@@ -167,7 +172,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
 			} else {
 				buf.append(value);
 			}
-			buf.append("\n");
+			buf.append(LINE_SEPARATOR_UNIX);
 		}
 		// The CanonicalizedResource this request is working with.
 		// If the request specifies a bucket using the HTTP Host header
@@ -175,13 +180,14 @@ public final class KolichS3Signer extends AbstractAwsSigner {
 		// "/" (e.g., "/bucketname"). For path-style requests and requests
 		// that don't address a bucket, do nothing.
         if(request.getResource() != null) {
-        	buf.append("/" + request.getResource() + request.getURI().getRawPath());
+        	buf.append("/" + request.getResource() +
+        		request.getURI().getRawPath());
         } else {
         	buf.append(request.getURI().getRawPath());
         }
         // Amazon requires us to sort the query string parameters.
-        final List<SortableBasicNameValuePair> params = sortParams(
-        	URLEncodedUtils.parse(request.getURI(), UTF_8));
+        final List<SortableBasicNameValuePair> params =
+        	sortParams(URLEncodedUtils.parse(request.getURI(), UTF_8));
 		String separator = "?";
 		for (final NameValuePair pair : params) {
 			final String name = pair.getName(), value = pair.getValue();
@@ -200,11 +206,8 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     }
     
     /**
-     * Given an HttpRequestBase, extracts a Map containing
-     * each header to value pair.  The returned Map is
-     * unmodifiable.
-     * @param request
-     * @return
+     * Given an HttpRequestBase, extracts a Map containing each header to
+     * value pair.  The returned Map is unmodifiable.
      */
     private static final Map<String, String> getHeadersAsMap(
     	final AwsHttpRequest request) {
@@ -212,7 +215,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     	for(final Header h : request.getRequestBase().getAllHeaders()) {
     		map.put(h.getName(), h.getValue());
     	}
-    	return Collections.unmodifiableMap(map);
+    	return unmodifiableMap(map);
     }
     
 }
