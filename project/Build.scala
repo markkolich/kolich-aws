@@ -33,13 +33,14 @@ object Dependencies {
   
   // Internal dependencies.
 
-  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "1.2" % "compile"
+  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "1.2.1" % "compile"
   
   // External dependencies.
   
   private val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.4.5" % "compile" intransitive()
+  private val commonsLang3 = "org.apache.commons" % "commons-lang3" % "3.1" % "compile" 
 
-  val deps = Seq(kolichHttpClient4Closure, awsJavaSdk)
+  val deps = Seq(kolichHttpClient4Closure, awsJavaSdk, commonsLang3)
 
 }
 
@@ -51,7 +52,7 @@ object Resolvers {
 
 }
 
-object KolichAws extends Build {
+object Aws extends Build {
 
   import Dependencies._
   import Resolvers._

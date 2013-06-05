@@ -26,12 +26,18 @@
 
 package com.kolich.aws.signing;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
+import static org.apache.commons.lang3.StringUtils.abbreviate;
+
 public final class AwsCredentials {
 	
 	private final String key_;
 	private final String secret_;
 	
 	public AwsCredentials(final String key, final String secret) {
+		checkNotNull(key, "AWS API key cannot be null.");
+		checkNotNull(secret, "AWS API secret cannot be null.");
 		key_ = key;
 		secret_ = secret;
 	}
@@ -44,9 +50,14 @@ public final class AwsCredentials {
 		return secret_;
 	}
 	
+	public byte[] getSecretBytes() {
+		return getBytesUtf8(secret_);
+	}
+	
 	@Override
 	public String toString() {
-		return String.format("AwsCredentials(%s, %s)", key_, secret_);
+		return String.format("AwsCredentials(%s, %s)", key_,
+			abbreviate(secret_, 10));
 	}
 
 }

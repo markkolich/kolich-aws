@@ -42,6 +42,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -122,7 +123,17 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		}
 		@Override
 		public void before(final HttpRequestBase request) throws Exception {
+			request.setURI(getRequestURI(request.getURI()));
 			signRequest(new AwsHttpRequest(request, bucketName_));
+		}
+		/**
+		 * Override this method if you need to modify the request URI
+		 * before execution.  Allows the appending/inclusion of query
+		 * parameters (if a GET), etc.
+		 */
+		public URI getRequestURI(final URI uri) throws Exception {
+			// Default behavior is no modifications to URI.
+			return uri;
 		}
 		@Override
 		public S success(final HttpSuccess success) throws Exception {
@@ -174,8 +185,8 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		final String marker, final String... path) {
 		return new AwsS3HttpClosure<ObjectListing>(client_, SC_OK, bucketName) {
 			@Override
-			public void before(final HttpRequestBase request) throws Exception {
-				final URIBuilder builder = new URIBuilder(request.getURI());
+			public URI getRequestURI(final URI uri) throws Exception {
+				final URIBuilder builder = new URIBuilder(uri);
 				if(marker != null) {
 					builder.addParameter(S3_PARAM_MARKER, marker);
 				}
@@ -184,8 +195,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		    		builder.addParameter(S3_PARAM_PREFIX,
 		    			varargsToPathString(path));
 		    	}
-				request.setURI(builder.build());
-				super.before(request);
+				return builder.build();
 			}
 			@Override
 			public ObjectListing success(final HttpSuccess success) throws Exception {
