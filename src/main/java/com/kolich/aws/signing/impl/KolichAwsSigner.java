@@ -11,11 +11,15 @@ import com.kolich.aws.KolichAwsException;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
 
-public final class AwsSignerImpl implements AwsSigner {
+public final class KolichAwsSigner implements AwsSigner {
+	
+	public static enum AwsSigningAlgorithm {		
+		HmacSHA1, HmacSHA256;
+	};
 	
 	private final AwsSigningAlgorithm algorithm_;
 	
-	public AwsSignerImpl(final AwsSigningAlgorithm algorithm) {
+	public KolichAwsSigner(final AwsSigningAlgorithm algorithm) {
 		algorithm_ = algorithm;
 	}
 

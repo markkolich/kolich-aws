@@ -26,7 +26,7 @@
 
 package com.kolich.aws.services.s3.impl;
 
-import static com.kolich.aws.signing.impl.AwsSigningAlgorithm.HmacSHA1;
+import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA1;
 import static com.kolich.aws.transport.AwsHeaders.AMAZON_PREFIX;
 import static com.kolich.aws.transport.AwsHeaders.S3_ALTERNATE_DATE;
 import static com.kolich.aws.transport.SortableBasicNameValuePair.sortParams;
@@ -55,22 +55,22 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
-import com.kolich.aws.signing.impl.AwsSignerImpl;
+import com.kolich.aws.signing.impl.KolichAwsSigner;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.aws.transport.SortableBasicNameValuePair;
 import com.kolich.common.date.RFC822DateFormat;
 
-public final class S3Signer extends AbstractAwsSigner {
+public final class KolichS3Signer extends AbstractAwsSigner {
 	
-	public S3Signer(final AwsCredentials credentials, final AwsSigner signer) {
+	public KolichS3Signer(final AwsCredentials credentials, final AwsSigner signer) {
 		super(credentials, signer);
 	}
 	
-	public S3Signer(final AwsCredentials credentials) {
-		this(credentials, new AwsSignerImpl(HmacSHA1));
+	public KolichS3Signer(final AwsCredentials credentials) {
+		this(credentials, new KolichAwsSigner(HmacSHA1));
 	}
 	
-	public S3Signer(final String key, final String secret) {
+	public KolichS3Signer(final String key, final String secret) {
 		this(new AwsCredentials(key, secret));
 	}
 
