@@ -35,10 +35,5 @@ public interface AwsSigner {
 	 * @param input the input String to sign
 	 */
 	public String sign(final AwsCredentials credentials, final String input);
-	
-	/**
-	 * A convenience method to return the signing algorithm by name.
-	 */
-	public String getAlgorithmName();
 		
 }

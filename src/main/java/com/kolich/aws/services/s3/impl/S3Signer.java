@@ -26,6 +26,7 @@
 
 package com.kolich.aws.services.s3.impl;
 
+import static com.kolich.aws.signing.algorithms.AwsSigningAlgorithm.HmacSHA1;
 import static com.kolich.aws.transport.AwsHeaders.AMAZON_PREFIX;
 import static com.kolich.aws.transport.AwsHeaders.S3_ALTERNATE_DATE;
 import static com.kolich.aws.transport.SortableBasicNameValuePair.sortParams;
@@ -54,7 +55,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
-import com.kolich.aws.signing.algorithms.HMACSHA1Signer;
+import com.kolich.aws.signing.algorithms.AwsSignerImpl;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.aws.transport.SortableBasicNameValuePair;
 import com.kolich.common.date.RFC822DateFormat;
@@ -66,7 +67,7 @@ public final class S3Signer extends AbstractAwsSigner {
 	}
 	
 	public S3Signer(final AwsCredentials credentials) {
-		this(credentials, new HMACSHA1Signer());
+		this(credentials, new AwsSignerImpl(HmacSHA1));
 	}
 	
 	public S3Signer(final String key, final String secret) {
