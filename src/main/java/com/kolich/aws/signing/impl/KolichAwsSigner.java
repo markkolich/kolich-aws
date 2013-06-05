@@ -1,5 +1,6 @@
 package com.kolich.aws.signing.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.kolich.common.util.crypt.Base64Utils.encodeBase64ToString;
 import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 
@@ -19,6 +20,7 @@ public final class KolichAwsSigner implements AwsSigner {
 	private final AwsSigningAlgorithm algorithm_;
 	
 	public KolichAwsSigner(final AwsSigningAlgorithm algorithm) {
+		checkNotNull(algorithm, "Signing algorithm cannot be null.");
 		algorithm_ = algorithm;
 	}
 
