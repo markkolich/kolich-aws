@@ -24,7 +24,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.kolich.aws.signing.algorithms;
+package com.kolich.aws.signing.impl;
 
 public enum AwsSigningAlgorithm {
 	

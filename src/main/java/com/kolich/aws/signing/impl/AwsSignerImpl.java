@@ -1,4 +1,4 @@
-package com.kolich.aws.signing.algorithms;
+package com.kolich.aws.signing.impl;
 
 import static com.kolich.common.util.crypt.Base64Utils.encodeBase64;
 import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
@@ -33,7 +33,8 @@ public final class AwsSignerImpl implements AwsSigner {
 			return newStringUtf8(encodeBase64(mac.doFinal(getBytesUtf8(input))));
 		} catch (Exception e) {
 			throw new KolichAwsException("Failed to sign input " +
-				"string: " + input, e);
+				"string (algorithm=" + algorithm_ + ", input=" + input + ")",
+					e);
 		}
 	}
 	
