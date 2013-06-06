@@ -35,7 +35,7 @@ import org.apache.http.Header;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectResult;
-import com.kolich.common.either.Either;
+import com.kolich.common.functional.either.Either;
 import com.kolich.common.util.URLEncodingUtils;
 import com.kolich.http.common.response.HttpFailure;
 
@@ -62,6 +62,9 @@ public interface S3Client {
 	 */
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
 		final String marker, final String... path);
+	
+	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
+		final String marker);
 	
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName);
 	

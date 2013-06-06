@@ -91,7 +91,7 @@ public abstract class AbstractAwsService {
 		} else {
 			// Our communication endpoint can only be HTTPS.
 			throw new KolichAwsException("Oops! AWS endpoints must start " +
-				"with https:// but you gave me something else: " +
+				"with " + HTTPS + " but you gave me something else: " +
 					apiEndPoint);
 		}
 		// Create our endpoint URI.
@@ -120,11 +120,11 @@ public abstract class AbstractAwsService {
 				// For example, on a bucket named "foo" the subdomain would
 				// be "foo" and the resulting endpoint we actually send
 				// the request to is "foo.s3.amazonaws.com".
-				((request.getResource() != null) ?
+				((request.getResource().isSome()) ?
 					// If there is a "resource" (usually a bucket name to
 					// represent a sub-domain, then append it followed by
 					// a single dot.
-					request.getResource() + DOT_STRING :
+					request.getResource().get() + DOT_STRING :
 					// If the request has no resource, usually for all AWS
 					// services other than S3, then just append an empty
 					// String.

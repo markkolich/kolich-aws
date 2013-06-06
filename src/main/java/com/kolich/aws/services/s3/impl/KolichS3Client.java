@@ -31,6 +31,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.kolich.aws.transport.AwsHeaders.S3_REDUCED_REDUNDANCY;
 import static com.kolich.aws.transport.AwsHeaders.S3_VERSION_ID;
 import static com.kolich.aws.transport.AwsHeaders.STORAGE_CLASS;
+import static com.kolich.common.functional.option.Some.some;
 import static com.kolich.common.util.URLEncodingUtils.urlDecode;
 import static com.kolich.common.util.URLEncodingUtils.urlEncode;
 import static java.util.regex.Pattern.compile;
@@ -63,7 +64,7 @@ import com.kolich.aws.services.AbstractAwsService;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.services.s3.S3Client;
 import com.kolich.aws.transport.AwsHttpRequest;
-import com.kolich.common.either.Either;
+import com.kolich.common.functional.either.Either;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
 
@@ -124,7 +125,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		@Override
 		public void before(final HttpRequestBase request) throws Exception {
 			request.setURI(getRequestURI(request.getURI()));
-			signRequest(new AwsHttpRequest(request, bucketName_));
+			signRequest(new AwsHttpRequest(request, some(bucketName_)));
 		}
 		/**
 		 * Override this method if you need to modify the request URI
@@ -206,8 +207,14 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	}
 	
 	@Override
+	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
+		final String marker) {
+		return listObjects(bucketName, marker, (String[])null);
+	}
+	
+	@Override
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName) {
-		return listObjects(bucketName, null, (String[])null);
+		return listObjects(bucketName, null);
 	}
 
 	@Override
@@ -281,7 +288,10 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 			@Override
 			public byte[] success(final HttpSuccess success) throws Exception {
 				final ByteArrayOutputStream os = new ByteArrayOutputStream();
-				// Copy the object.
+				// Copy the object to the ByteArrayOutputStream.  The consumer
+				// of this method should be keenly aware that this method
+				// copies the response body entirely into memory in order to
+				// ultimately return the response as a byte[] array.
 				copyLarge(success.getContent(), os);
 				return os.toByteArray();
 			}

@@ -5,7 +5,7 @@ import org.apache.http.client.HttpClient;
 import com.amazonaws.services.s3.model.Bucket;
 import com.kolich.aws.services.s3.S3Client;
 import com.kolich.aws.services.s3.impl.KolichS3Client;
-import com.kolich.common.either.Either;
+import com.kolich.common.functional.either.Either;
 import com.kolich.http.blocking.KolichDefaultHttpClient.KolichHttpClientFactory;
 import com.kolich.http.common.response.HttpFailure;
 
