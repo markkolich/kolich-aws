@@ -31,7 +31,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.kolich.aws.transport.AwsHeaders.S3_REDUCED_REDUNDANCY;
 import static com.kolich.aws.transport.AwsHeaders.S3_VERSION_ID;
 import static com.kolich.aws.transport.AwsHeaders.STORAGE_CLASS;
-import static com.kolich.common.functional.option.Some.some;
 import static com.kolich.common.util.URLEncodingUtils.urlDecode;
 import static com.kolich.common.util.URLEncodingUtils.urlEncode;
 import static java.util.regex.Pattern.compile;
@@ -43,7 +42,6 @@ import static org.apache.http.HttpStatus.SC_OK;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -124,21 +122,11 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		}
 		@Override
 		public void before(final HttpRequestBase request) throws Exception {
-			request.setURI(getRequestURI(request.getURI()));
-			signRequest(new AwsHttpRequest(request, some(bucketName_)));
-		}
-		/**
-		 * Override this method if you need to modify the request URI
-		 * before execution.  Allows the appending/inclusion of query
-		 * parameters (if a GET), etc.
-		 */
-		public URI getRequestURI(final URI uri) throws Exception {
-			// Default behavior is no modifications to URI.
-			return uri;
+			signRequest(new AwsHttpRequest(request, bucketName_));
 		}
 		@Override
 		public S success(final HttpSuccess success) throws Exception {
-			return null; // Meh.
+			return null; // Default; override this as needed.
 		}
 		public final Either<HttpFailure,S> head(final String... path) {
 			return super.head(buildPath(path));
@@ -163,7 +151,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		}
 		private final String buildPath(final String... path) {
 			final StringBuilder sb = new StringBuilder(SLASH_STRING);
-			if(path != null) {
+			if(path != null && path.length > 0) {
 				sb.append(urlEncode(varargsToPathString(path)));
 			}
 			return sb.toString();
@@ -186,8 +174,8 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		final String marker, final String... path) {
 		return new AwsS3HttpClosure<ObjectListing>(client_, SC_OK, bucketName) {
 			@Override
-			public URI getRequestURI(final URI uri) throws Exception {
-				final URIBuilder builder = new URIBuilder(uri);
+			public void before(final HttpRequestBase request) throws Exception {
+				final URIBuilder builder = new URIBuilder(request.getURI());
 				if(marker != null) {
 					builder.addParameter(S3_PARAM_MARKER, marker);
 				}
@@ -196,7 +184,8 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		    		builder.addParameter(S3_PARAM_PREFIX,
 		    			varargsToPathString(path));
 		    	}
-				return builder.build();
+		    	request.setURI(builder.build());
+				super.before(request);
 			}
 			@Override
 			public ObjectListing success(final HttpSuccess success) throws Exception {

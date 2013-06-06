@@ -38,6 +38,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import com.kolich.common.functional.option.None;
 import com.kolich.common.functional.option.Option;
+import com.kolich.common.functional.option.Some;
 
 public final class AwsHttpRequest {
 	
@@ -52,6 +53,11 @@ public final class AwsHttpRequest {
 		request_ = request;
 		resource_ = resource;
 		params_ = new ArrayList<SortableBasicNameValuePair>();
+	}
+	
+	public AwsHttpRequest(final HttpRequestBase request,
+		final String resource) {
+		this(request, Some.<String>some(resource));
 	}
 	
 	public AwsHttpRequest(final HttpRequestBase request) {
