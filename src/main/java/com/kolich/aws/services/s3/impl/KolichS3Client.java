@@ -274,12 +274,14 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 					request.setHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
 		    	}
 				// Altough InputStreamEntity lets you specify a Content-Type,
-				// we're intentionally forcing the issue here.
+				// we're intentionally forcing the issue here.  It seems that
+				// setting the content type on the request through a vanilla
+				// InputStreamEntity does not actually do the right thing.
 				if(type != null) {
 					request.setHeader(CONTENT_TYPE, type.toString());
-				}				
+				}
 				((HttpPut)request).setEntity(new InputStreamEntity(input,
-					contentLength, type));
+					contentLength));
 			}
 			@Override
 			public PutObjectResult success(final HttpSuccess success) throws Exception {
@@ -386,7 +388,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	@Override
 	public boolean objectExists(final String bucketName,
 		final String... path) {
-		return new AwsS3HttpClosure<Void>(client_, SC_OK, bucketName){
+		return new AwsS3HttpClosure<Void>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
 				checkNotNull(bucketName, "Bucket name cannot be null.");
