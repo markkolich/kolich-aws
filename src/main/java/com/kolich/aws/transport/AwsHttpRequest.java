@@ -36,32 +36,22 @@ import java.util.List;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpRequestBase;
 
-import com.kolich.common.functional.option.None;
-import com.kolich.common.functional.option.Option;
-import com.kolich.common.functional.option.Some;
-
 public final class AwsHttpRequest {
 	
 	private final HttpRequestBase request_;	
 	private final List<SortableBasicNameValuePair> params_;	
-	private final Option<String> resource_;
+	private final String resource_;
 	
 	public AwsHttpRequest(final HttpRequestBase request,
-		final Option<String> resource) {
+		final String resource) {
 		checkNotNull(request, "The request cannot be null.");
-		checkNotNull(resource, "The resource cannot be null.");
 		request_ = request;
 		resource_ = resource;
 		params_ = new ArrayList<SortableBasicNameValuePair>();
 	}
 	
-	public AwsHttpRequest(final HttpRequestBase request,
-		final String resource) {
-		this(request, Some.<String>some(resource));
-	}
-	
 	public AwsHttpRequest(final HttpRequestBase request) {
-		this(request, None.<String>none());
+		this(request, null);
 	}
 
 	public HttpRequestBase getRequestBase() {
@@ -81,7 +71,7 @@ public final class AwsHttpRequest {
 		request_.setURI(uri);
 	}
 
-	public Option<String> getResource() {
+	public String getResource() {
 		return resource_;
 	}
 	

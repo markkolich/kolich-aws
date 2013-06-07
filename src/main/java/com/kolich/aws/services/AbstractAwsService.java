@@ -32,7 +32,6 @@ import java.net.URI;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.protocol.HttpContext;
 
 import com.kolich.aws.KolichAwsException;
@@ -56,15 +55,6 @@ public abstract class AbstractAwsService {
 		public AwsBaseHttpClosure(final HttpClient client, final int expectStatus) {
 			super(client);
 			expectStatus_ = expectStatus;
-		}
-		@Override
-		public void before(final HttpRequestBase request) throws Exception {
-			signRequest(new AwsHttpRequest(request));
-		}
-		@Override
-		public void after(final HttpResponse response,
-			final HttpContext context) throws Exception {
-			super.after(response, context);
 		}
 		@Override
 		public boolean check(final HttpResponse response,
@@ -120,11 +110,11 @@ public abstract class AbstractAwsService {
 				// For example, on a bucket named "foo" the subdomain would
 				// be "foo" and the resulting endpoint we actually send
 				// the request to is "foo.s3.amazonaws.com".
-				((request.getResource().isSome()) ?
+				((request.getResource() != null) ?
 					// If there is a "resource" (usually a bucket name to
 					// represent a sub-domain, then append it followed by
 					// a single dot.
-					request.getResource().get() + DOT_STRING :
+					request.getResource() + DOT_STRING :
 					// If the request has no resource, usually for all AWS
 					// services other than S3, then just append an empty
 					// String.

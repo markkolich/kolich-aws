@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import org.apache.http.Header;
+import org.apache.http.entity.ContentType;
 
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -97,8 +98,26 @@ public interface S3Client {
 	 * about the object flushed to S3
 	 */
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final Header[] headers, final boolean rrs, final InputStream input,
+		final boolean rrs, final ContentType type, final InputStream input,
 		final long contentLength, final String... path);
+	
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final ContentType type, final InputStream input,
+		final long contentLength, final String... path);
+	
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final InputStream input, final long contentLength,
+		final String... path);
+	
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final boolean rrs, final ContentType type, final byte[] object,
+		final String... path);
+	
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final ContentType type, final byte[] object, final String... path);
+	
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final byte[] object, final String... path);
 	
 	/**
 	 * Delete an object.
