@@ -36,9 +36,11 @@ import static com.kolich.common.util.URLEncodingUtils.urlEncode;
 import static java.util.regex.Pattern.compile;
 import static java.util.regex.Pattern.quote;
 import static org.apache.commons.io.IOUtils.copyLarge;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -52,6 +54,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 
 import com.amazonaws.services.s3.model.Bucket;
@@ -113,21 +116,36 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		public AwsS3HttpClosure(final HttpClient client, final int expectStatus,
 			final String bucketName) {
 			super(client, expectStatus);
-			checkNotNull(bucketName, "The bucket name cannot be null.");
-	    	checkState(isValidBucketName(bucketName), "Invalid bucket name.");
 			bucketName_ = bucketName;
 		}
 		public AwsS3HttpClosure(final HttpClient client, final int expectStatus) {
 			this(client, expectStatus, null);
 		}
 		@Override
-		public void before(final HttpRequestBase request) throws Exception {
+		public final void before(final HttpRequestBase request) throws Exception {			
+			validate();
+			prepare(request);
 			signRequest(new AwsHttpRequest(request, bucketName_));
+		}
+		public void validate() throws Exception {
+			// Default, nothing.
+		}
+		public void prepare(final HttpRequestBase request) throws Exception {
+			// Default, nothing.
 		}
 		@Override
 		public S success(final HttpSuccess success) throws Exception {
-			return null; // Default; override this as needed.
+			return null; // Default, return null on success.
 		}
+		/*
+		@Override
+		public void after(final HttpResponse response, final HttpContext context)
+			throws Exception {
+			if(response.getEntity() != null) {
+				System.out.println(EntityUtils.toString(response.getEntity()));				
+			}
+		}
+		*/
 		public final Either<HttpFailure,S> head(final String... path) {
 			return super.head(buildPath(path));
 		}
@@ -171,10 +189,16 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 
 	@Override
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
-		final String marker, final String... path) {
+		final String marker, final String... path) {		
 		return new AwsS3HttpClosure<ObjectListing>(client_, SC_OK, bucketName) {
 			@Override
-			public void before(final HttpRequestBase request) throws Exception {
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+			@Override
+			public void prepare(final HttpRequestBase request) throws Exception {
 				final URIBuilder builder = new URIBuilder(request.getURI());
 				if(marker != null) {
 					builder.addParameter(S3_PARAM_MARKER, marker);
@@ -185,7 +209,6 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		    			varargsToPathString(path));
 		    	}
 		    	request.setURI(builder.build());
-				super.before(request);
 			}
 			@Override
 			public ObjectListing success(final HttpSuccess success) throws Exception {
@@ -208,7 +231,13 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 
 	@Override
 	public Either<HttpFailure,Bucket> createBucket(final String bucketName) {
-    	return new AwsS3HttpClosure<Bucket>(client_, SC_OK, bucketName) {			
+    	return new AwsS3HttpClosure<Bucket>(client_, SC_OK, bucketName) {
+    		@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
 			@Override
 			public Bucket success(final HttpSuccess success) throws Exception {
 				return new Bucket(bucketName);
@@ -218,24 +247,39 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 
 	@Override
 	public Either<HttpFailure,Void> deleteBucket(final String bucketName) {
-    	return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){}
-    		.delete();
+    	return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
+    		@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+    	}.delete();
 	}
 
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final Header[] headers, final boolean rrs, final InputStream input,
-		final long contentLength, final String... path) {		
+		final boolean rrs, final ContentType type, final InputStream input,
+		final long contentLength, final String... path) {
 		return new AwsS3HttpClosure<PutObjectResult>(client_, SC_OK, bucketName) {
 			@Override
-			public void before(final HttpRequestBase request) throws Exception {
-				request.setHeaders(headers);
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+			@Override
+			public void prepare(final HttpRequestBase request) throws Exception {
 				if(rrs) {
-					request.addHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
+					request.setHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
 		    	}
+				// Altough InputStreamEntity lets you specify a Content-Type,
+				// we're intentionally forcing the issue here.
+				if(type != null) {
+					request.setHeader(CONTENT_TYPE, type.toString());
+				}				
 				((HttpPut)request).setEntity(new InputStreamEntity(input,
-					contentLength));
-				super.before(request);
+					contentLength, type));
 			}
 			@Override
 			public PutObjectResult success(final HttpSuccess success) throws Exception {
@@ -246,18 +290,64 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 			}
     	}.put(path);
 	}
+	
+	@Override
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final ContentType type, final InputStream input,
+		final long contentLength, final String... path) {
+		return putObject(bucketName, false, type, input, contentLength, path);
+	}
+	
+	@Override
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final InputStream input, final long contentLength, final String... path) {
+		return putObject(bucketName, null, input, contentLength, path);
+	}
+	
+	@Override
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final boolean rrs, final ContentType type, final byte[] object,
+		final String... path) {
+		return putObject(bucketName, rrs, type,
+			new ByteArrayInputStream(object), object.length,
+			path);
+	}
+	
+	@Override
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final ContentType type, final byte[] object, final String... path) {
+		return putObject(bucketName, false, type, object, path);
+	}
+	
+	@Override
+	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
+		final byte[] object, final String... path) {
+		return putObject(bucketName, null, object, path);
+	}
 
 	@Override
 	public Either<HttpFailure,Void> deleteObject(final String bucketName,
 		final String... path) {
-		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){}
-			.delete(path);
+		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+		}.delete(path);
 	}
 	
 	@Override
 	public Either<HttpFailure,List<Header>> getObject(final String bucketName,
 		final OutputStream destination, final String... path) {
 		return new AwsS3HttpClosure<List<Header>>(client_, SC_OK, bucketName) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
 			@Override
 			public List<Header> success(final HttpSuccess success) throws Exception {
 				// Copy the object.
@@ -275,6 +365,12 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		final String... path) {
 		return new AwsS3HttpClosure<byte[]>(client_, SC_OK, bucketName) {
 			@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+			@Override
 			public byte[] success(final HttpSuccess success) throws Exception {
 				final ByteArrayOutputStream os = new ByteArrayOutputStream();
 				// Copy the object to the ByteArrayOutputStream.  The consumer
@@ -290,8 +386,14 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	@Override
 	public boolean objectExists(final String bucketName,
 		final String... path) {
-		return new AwsS3HttpClosure<Void>(client_, SC_OK, bucketName){}
-			.head(path).success();
+		return new AwsS3HttpClosure<Void>(client_, SC_OK, bucketName){
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(bucketName, "Bucket name cannot be null.");
+				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
+					"did not match expected bucket name pattern.");
+			}
+		}.head(path).success();
 	}
 	
 	private static final boolean isValidBucketName(final String bucketName) {
