@@ -273,7 +273,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 				if(rrs) {
 					request.setHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
 		    	}
-				// Altough InputStreamEntity lets you specify a Content-Type,
+				// Although InputStreamEntity lets you specify a Content-Type,
 				// we're intentionally forcing the issue here.  It seems that
 				// setting the content type on the request through a vanilla
 				// InputStreamEntity does not actually do the right thing.
