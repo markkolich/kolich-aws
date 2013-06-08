@@ -55,6 +55,7 @@ import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.services.sqs.SQSClient;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
 
@@ -177,7 +178,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 
 	@Override
 	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName,
-		final int defaultVisibilityTimeout) {
+		final Integer defaultVisibilityTimeout) {
 		return new AwsSQSHttpClosure<CreateQueueResult>(client_, SC_OK,
 			new CreateQueueResultStaxUnmarshaller()) {
 			@Override
@@ -190,7 +191,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 			public void prepare(final AwsHttpRequest request) throws Exception {
 				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_CREATE_QUEUE);
 				request.addParameter(SQS_QUEUE_NAME_PARAM, queueName);
-				if(defaultVisibilityTimeout >= 0) {
+				if(defaultVisibilityTimeout != null) {
 					request.addParameter(SQS_DEFAULT_VISIBILITY_TIMEOUT_PARAM,
 						Integer.toString(defaultVisibilityTimeout));
 				}
@@ -201,7 +202,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	@Override
 	public Either<HttpFailure,CreateQueueResult> createQueue(
 		final String queueName) {
-		return createQueue(queueName, -1);
+		return createQueue(queueName, null);
 	}
 
 	@Override
