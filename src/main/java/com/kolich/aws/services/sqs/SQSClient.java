@@ -32,6 +32,8 @@ import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.kolich.common.functional.either.Either;
+import com.kolich.http.common.response.HttpFailure;
 
 public interface SQSClient {
 
@@ -39,7 +41,7 @@ public interface SQSClient {
 	 * List all queues.
 	 * @return a {@link ListQueuesResult} representing all queues
 	 */
-	public ListQueuesResult listQueues();
+	public Either<HttpFailure,ListQueuesResult> listQueues();
 	
 	/**
 	 * Create a new queue.
@@ -47,8 +49,11 @@ public interface SQSClient {
 	 * @param defaultVisibilityTimeout the default message visibility timeout
 	 * @return a {@link CreateQueueResult} representing the new queue
 	 */
-	public CreateQueueResult createQueue(final String queueName,
-	    final int defaultVisibilityTimeout);
+	public Either<HttpFailure,CreateQueueResult> createQueue(
+		final String queueName, final int defaultVisibilityTimeout);
+	
+	public Either<HttpFailure,CreateQueueResult> createQueue(
+		final String queueName);
 	
 	/**
 	 * Delete a queue.
