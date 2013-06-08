@@ -50,7 +50,7 @@ public interface SQSClient {
 	 * @return a {@link CreateQueueResult} representing the new queue
 	 */
 	public Either<HttpFailure,CreateQueueResult> createQueue(
-		final String queueName, final int defaultVisibilityTimeout);
+		final String queueName, final Integer defaultVisibilityTimeout);
 	
 	public Either<HttpFailure,CreateQueueResult> createQueue(
 		final String queueName);

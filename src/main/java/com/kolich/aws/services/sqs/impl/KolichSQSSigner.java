@@ -82,7 +82,8 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 
 	@Override
 	public void signHttpRequest(final AwsHttpRequest request) {
-		request.addHeader(DATE, RFC822DateFormat.format(new Date()));
+		final Date now = new Date();
+		request.addHeader(DATE, RFC822DateFormat.format(now));
     	// Only add a Content-Type header to the request if one is not
     	// already there.  SQS expects this to be here.
 		if(request.getFirstHeader(CONTENT_TYPE) == null) {
@@ -97,7 +98,7 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
     	params.add(new SortableBasicNameValuePair(SQS_PARAM_SIGNATURE_VERSION,
     		SQS_DEFAULT_SIGNATURE_VERSION));
     	params.add(new SortableBasicNameValuePair(SQS_PARAM_TIMESTAMP,
-    		ISO8601DateFormat.format(new Date())));
+    		ISO8601DateFormat.format(now)));
     	// Tell SQS what method we used to sign the request.  This will be
     	// Hmac256 for SQS.
     	params.add(new SortableBasicNameValuePair(SQS_PARAM_SIGNATURE_METHOD,
