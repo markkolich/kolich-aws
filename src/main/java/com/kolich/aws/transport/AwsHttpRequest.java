@@ -84,6 +84,23 @@ public final class AwsHttpRequest {
 	public Header getFirstHeader(final String name) {
 		return request_.getFirstHeader(name);
 	}
+	
+	public void addParameter(final SortableBasicNameValuePair pair) {
+		checkNotNull(pair, "The name-value pair cannot be null.");
+		params_.add(pair);
+	}
+	
+	public void addParameter(final String name, final String value) {
+		checkNotNull(name, "The pair name cannot be null.");
+		checkNotNull(value, "The pair value cannot be null.");
+		addParameter(new SortableBasicNameValuePair(name, value));
+	}
+	
+	public void addParameterOpt(final String name, final String value) {
+		if(name != null && value != null) {
+			addParameter(name, value);
+		}
+	}
 		
 	/**
 	 * Returns an unmodifiable view of the current parameters list.

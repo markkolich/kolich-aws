@@ -122,30 +122,22 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 			this(client, expectStatus, null);
 		}
 		@Override
-		public final void before(final HttpRequestBase request) throws Exception {			
+		public final void before(final HttpRequestBase request) throws Exception {
+			final AwsHttpRequest wrapped = new AwsHttpRequest(request, bucketName_);
 			validate();
-			prepare(request);
-			signRequest(new AwsHttpRequest(request, bucketName_));
+			prepare(wrapped);
+			signRequest(wrapped);
 		}
 		public void validate() throws Exception {
 			// Default, nothing.
 		}
-		public void prepare(final HttpRequestBase request) throws Exception {
+		public void prepare(final AwsHttpRequest request) throws Exception {
 			// Default, nothing.
 		}
 		@Override
 		public S success(final HttpSuccess success) throws Exception {
 			return null; // Default, return null on success.
-		}
-		/*
-		@Override
-		public void after(final HttpResponse response, final HttpContext context)
-			throws Exception {
-			if(response.getEntity() != null) {
-				System.out.println(EntityUtils.toString(response.getEntity()));				
-			}
-		}
-		*/
+		}		
 		public final Either<HttpFailure,S> head(final String... path) {
 			return super.head(buildPath(path));
 		}
@@ -198,7 +190,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 					"did not match expected bucket name pattern.");
 			}
 			@Override
-			public void prepare(final HttpRequestBase request) throws Exception {
+			public void prepare(final AwsHttpRequest request) throws Exception {
 				final URIBuilder builder = new URIBuilder(request.getURI());
 				if(marker != null) {
 					builder.addParameter(S3_PARAM_MARKER, marker);
@@ -269,18 +261,19 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 					"did not match expected bucket name pattern.");
 			}
 			@Override
-			public void prepare(final HttpRequestBase request) throws Exception {
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				final HttpRequestBase base = request.getRequestBase();
 				if(rrs) {
-					request.setHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
+					base.setHeader(STORAGE_CLASS, S3_REDUCED_REDUNDANCY);
 		    	}
 				// Although InputStreamEntity lets you specify a Content-Type,
 				// we're intentionally forcing the issue here.  It seems that
 				// setting the content type on the request through a vanilla
 				// InputStreamEntity does not actually do the right thing.
 				if(type != null) {
-					request.setHeader(CONTENT_TYPE, type.toString());
+					base.setHeader(CONTENT_TYPE, type.toString());
 				}
-				((HttpPut)request).setEntity(new InputStreamEntity(input,
+				((HttpPut)base).setEntity(new InputStreamEntity(input,
 					contentLength));
 			}
 			@Override
