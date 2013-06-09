@@ -33,6 +33,7 @@ import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
 import com.kolich.http.common.response.HttpFailure;
 
 public interface SQSClient {
@@ -59,7 +60,7 @@ public interface SQSClient {
 	 * Delete a queue.
 	 * @param queueURI the {@link URI} of the queue
 	 */
-	public void deleteQueue(final URI queueURI);
+	public Option<HttpFailure> deleteQueue(final URI queueURI);
 	
 	/**
 	 * Send a message to a queue.
@@ -67,7 +68,7 @@ public interface SQSClient {
 	 * @param message the message to push onto the queue
 	 * @return
 	 */
-	public SendMessageResult sendMessage(final URI queueURI,
+	public Either<HttpFailure,SendMessageResult> sendMessage(final URI queueURI,
 		final String message);
 	
 	/**
@@ -77,8 +78,15 @@ public interface SQSClient {
 	 * from the queue
 	 * @return
 	 */
-	public ReceiveMessageResult receiveMessage(final URI queueURI,
-		final int maxNumberOfMessages);
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI, final Integer longPollWaitSecs,
+		final Integer maxNumberOfMessages);
+	
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI, final Integer longPollWaitSecs);
+	
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI);
 	
 	/**
 	 * Delete a message.
@@ -86,7 +94,7 @@ public interface SQSClient {
 	 * @param receiptHandle the receipt handle that represents the message
 	 * to delete
 	 */
-	public void deleteMessage(final URI queueURI,
+	public Option<HttpFailure> deleteMessage(final URI queueURI,
 		final String receiptHandle);
 	
 	/**
@@ -96,7 +104,7 @@ public interface SQSClient {
 	 * to change
 	 * @param visibilityTimeout the new visibility timeout value
 	 */
-	public void changeMessageVisibility(final URI queueURI,
-		final String receiptHandle, final int visibilityTimeout);
+	public Option<HttpFailure> changeMessageVisibility(final URI queueURI,
+		final String receiptHandle, final Integer visibilityTimeout);
 		
 }

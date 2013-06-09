@@ -29,6 +29,7 @@ package com.kolich.aws.services.sqs.impl;
 import static com.amazonaws.ResponseMetadata.AWS_REQUEST_ID;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.kolich.aws.services.sqs.SQSRegion.DEFAULT;
 import static java.util.regex.Pattern.compile;
 import static javax.xml.stream.XMLInputFactory.newInstance;
 import static org.apache.http.HttpStatus.SC_OK;
@@ -48,38 +49,45 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.amazonaws.services.sqs.model.transform.CreateQueueResultStaxUnmarshaller;
 import com.amazonaws.services.sqs.model.transform.ListQueuesResultStaxUnmarshaller;
+import com.amazonaws.services.sqs.model.transform.ReceiveMessageResultStaxUnmarshaller;
+import com.amazonaws.services.sqs.model.transform.SendMessageResultStaxUnmarshaller;
 import com.amazonaws.transform.StaxUnmarshallerContext;
 import com.amazonaws.transform.Unmarshaller;
 import com.kolich.aws.services.AbstractAwsService;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.services.sqs.SQSClient;
+import com.kolich.aws.services.sqs.SQSRegion;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.None;
 import com.kolich.common.functional.option.Option;
+import com.kolich.common.functional.option.Some;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
 
 public final class KolichSQSClient extends AbstractAwsService implements SQSClient {
-	
-	/**
-	 * Default hostname for the SQS service endpoint.
-	 */
-    private static final String SQS_DEFAULT_ENDPOINT = "queue.amazonaws.com";
-    
+	    
     /**
      * SQS visibility timeouts can only be at most 43200 seconds (12-hours).
      */
-    private static final int SQS_MAX_VISIBILITY_TIMEOUT = 43200;
+    private static final int SQS_MAX_VISIBILITY_TIMEOUT = 43200; // seconds
     
     /**
      * The maximum number of messages to receive on any given request
      * cannot be more than 10.
      */
     private static final int SQS_MAX_MESSAGES_PER_REQUEST = 10;
+    
+    /**
+     * The maximum amount of time SQS will allow any client to long
+     * poll waiting for message delivery.
+     */
+    private static final int SQS_MAX_LONG_POLL_WAIT_TIME_SECS = 20; // seconds
 	
 	private static final String SQS_ACTION_PARAM = "Action";
 	private static final String SQS_QUEUE_NAME_PARAM = "QueueName";
     private static final String SQS_DEFAULT_VISIBILITY_TIMEOUT_PARAM = "DefaultVisibilityTimeout";
+    private static final String SQS_LONG_POLL_WAIT_TIME_PARAM = "WaitTimeSeconds";    
     private static final String SQS_VISIBILITY_TIMEOUT_PARAM = "VisibilityTimeout";
     private static final String SQS_MESSAGE_BODY_PARAM = "MessageBody";
     private static final String SQS_RECEIPT_HANDLE_PARAM = "ReceiptHandle";
@@ -103,14 +111,19 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
     private final HttpClient client_;
 	
 	public KolichSQSClient(final HttpClient client,
-		final AbstractAwsSigner signer) {
-		super(signer, SQS_DEFAULT_ENDPOINT);
+		final AbstractAwsSigner signer, final SQSRegion region) {
+		super(signer, region.getApiEndpoint());
 		client_ = client;
 	}
 	
 	public KolichSQSClient(final HttpClient client, final String key,
+		final String secret, final SQSRegion region) {
+		this(client, new KolichSQSSigner(key, secret), region);
+	}
+	
+	public KolichSQSClient(final HttpClient client, final String key,
 		final String secret) {
-		this(client, new KolichSQSSigner(key, secret));
+		this(client, key, secret, DEFAULT);
 	}
 	
 	private abstract class AwsSQSHttpClosure<S> extends AwsBaseHttpClosure<S> {
@@ -138,7 +151,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 		}
 		@Override
 		public S success(final HttpSuccess success) throws Exception {
-			return unmarshall(success);
+			return (unmarshaller_ != null) ? unmarshall(success) : null;
 		}
 		private final S unmarshall(final HttpSuccess success) throws Exception {
 	    	final XMLInputFactory xmlInputFactory = newInstance();
@@ -151,17 +164,14 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
     		stax.registerMetadataExpression("requestId", 2, AWS_REQUEST_ID);
     		return unmarshaller_.unmarshall(stax);
 	    }
-		public final Either<HttpFailure,S> get() {
-			return get(SLASH_STRING);
-		}
 		public final Either<HttpFailure,S> post() {
 			return post(SLASH_STRING);
 		}
-		public final Either<HttpFailure,S> put() {
-			return put(SLASH_STRING);
-		}
-		public final Either<HttpFailure,S> delete() {
-			return delete(SLASH_STRING);
+		public final Option<HttpFailure> postOption(final URI uri) {
+			final Either<HttpFailure,S> either = post(uri);
+			return either.success() ?
+				None.<HttpFailure>none() :
+				Some.<HttpFailure>some(either.left());
 		}
 	}
 
@@ -177,8 +187,8 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 
 	@Override
-	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName,
-		final Integer defaultVisibilityTimeout) {
+	public Either<HttpFailure,CreateQueueResult> createQueue(
+		final String queueName, final Integer defaultVisibilityTimeout) {
 		return new AwsSQSHttpClosure<CreateQueueResult>(client_, SC_OK,
 			new CreateQueueResultStaxUnmarshaller()) {
 			@Override
@@ -186,6 +196,11 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 				checkNotNull(queueName, "Queue name cannot be null.");
 				checkState(isValidQueueName(queueName), "Invalid queue name, " +
 					"did not match expected queue name pattern.");
+				if(defaultVisibilityTimeout != null) {
+					checkState(defaultVisibilityTimeout <= SQS_MAX_VISIBILITY_TIMEOUT,
+						"Default visibility timeout cannot be greater than: " +
+						SQS_MAX_VISIBILITY_TIMEOUT);
+				}
 			}
 			@Override
 			public void prepare(final AwsHttpRequest request) throws Exception {
@@ -206,33 +221,125 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 
 	@Override
-	public void deleteQueue(final URI queueURI) {
-		
+	public Option<HttpFailure> deleteQueue(final URI queueURI) {
+		return new AwsSQSHttpClosure<Void>(client_, SC_OK) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(queueURI, "Queue URI cannot be null.");
+			}
+			@Override
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_DELETE_QUEUE);
+			}
+		}.postOption(queueURI);
 	}
 
 	@Override
-	public SendMessageResult sendMessage(final URI queueURI,
+	public Either<HttpFailure,SendMessageResult> sendMessage(final URI queueURI,
 		final String message) {
-		
-		return null;
+		return new AwsSQSHttpClosure<SendMessageResult>(client_, SC_OK,
+			new SendMessageResultStaxUnmarshaller()) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(queueURI, "Queue URI cannot be null.");
+				checkNotNull(message, "Message to send cannot be null.");
+			}
+			@Override
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_SEND_MESSAGE);
+				request.addParameter(SQS_MESSAGE_BODY_PARAM, message);
+			}
+		}.post(queueURI);
 	}
 
 	@Override
-	public ReceiveMessageResult receiveMessage(final URI queueURI,
-		final int maxNumberOfMessages) {
-		
-		return null;
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI, final Integer longPollWaitSecs,
+		final Integer maxNumberOfMessages) {
+		return new AwsSQSHttpClosure<ReceiveMessageResult>(client_, SC_OK,
+			new ReceiveMessageResultStaxUnmarshaller()) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(queueURI, "Queue URI cannot be null.");
+				if(longPollWaitSecs != null) {
+					checkState(longPollWaitSecs <= SQS_MAX_LONG_POLL_WAIT_TIME_SECS,
+						"Cannot long poll wait on a queue longer than (secs): " +
+						SQS_MAX_LONG_POLL_WAIT_TIME_SECS);
+				}
+				if(maxNumberOfMessages != null) {
+					checkState(maxNumberOfMessages <= SQS_MAX_MESSAGES_PER_REQUEST,
+						"Max number of messages to receive cannot be greater than: " +
+						SQS_MAX_MESSAGES_PER_REQUEST);
+				}
+			}
+			@Override
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_RECEIVE_MESSAGE);
+				if(longPollWaitSecs != null) {
+					request.addParameter(SQS_LONG_POLL_WAIT_TIME_PARAM,
+						Integer.toString(longPollWaitSecs));
+				}
+				if(maxNumberOfMessages != null) {
+					request.addParameter(SQS_MAX_MESSAGES_PARAM,
+						Integer.toString(maxNumberOfMessages));
+				}
+			}
+		}.post(queueURI);
+	}
+	
+	@Override
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI, final Integer longPollWaitSecs) {
+		return receiveMessage(queueURI, longPollWaitSecs, null);
+	}
+	
+	@Override
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
+		final URI queueURI) {
+		return receiveMessage(queueURI, null);
 	}
 
 	@Override
-	public void deleteMessage(final URI queueURI, final String receiptHandle) {
-		
+	public Option<HttpFailure> deleteMessage(final URI queueURI,
+		final String receiptHandle) {
+		return new AwsSQSHttpClosure<Void>(client_, SC_OK) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(queueURI, "Queue URI cannot be null.");
+				checkNotNull(receiptHandle, "Message receipt handle cannot " +
+					"be null.");
+			}
+			@Override
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_DELETE_MESSAGE);
+				request.addParameter(SQS_RECEIPT_HANDLE_PARAM, receiptHandle);
+			}
+		}.postOption(queueURI);
 	}
 
 	@Override
-	public void changeMessageVisibility(final URI queueURI,
-		final String receiptHandle, final int visibilityTimeout) {
-		
+	public Option<HttpFailure> changeMessageVisibility(final URI queueURI,
+		final String receiptHandle, final Integer visibilityTimeout) {
+		return new AwsSQSHttpClosure<Void>(client_, SC_OK) {
+			@Override
+			public void validate() throws Exception {
+				checkNotNull(queueURI, "Queue URI cannot be null.");
+				checkNotNull(receiptHandle, "Message receipt handle cannot " +
+					"be null.");
+				checkNotNull(visibilityTimeout, "Message visibility timeout " +
+					"cannot be null.");
+				checkState(visibilityTimeout <= SQS_MAX_VISIBILITY_TIMEOUT,
+					"Message visibility timeout cannot be greater than: " +
+					SQS_MAX_VISIBILITY_TIMEOUT);
+			}
+			@Override
+			public void prepare(final AwsHttpRequest request) throws Exception {
+				request.addParameter(SQS_ACTION_PARAM, SQS_ACTION_CHANGE_VISIBILITY);
+				request.addParameter(SQS_RECEIPT_HANDLE_PARAM, receiptHandle);
+				request.addParameter(SQS_VISIBILITY_TIMEOUT_PARAM,
+					Integer.toString(visibilityTimeout));
+			}
+		}.postOption(queueURI);
 	}
 	
 	private static final boolean isValidQueueName(final String queueName) {

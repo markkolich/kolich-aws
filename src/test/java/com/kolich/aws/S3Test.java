@@ -13,6 +13,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.kolich.aws.services.s3.S3Client;
 import com.kolich.aws.services.s3.impl.KolichS3Client;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
 import com.kolich.http.blocking.KolichDefaultHttpClient.KolichHttpClientFactory;
 import com.kolich.http.common.response.HttpFailure;
 
@@ -35,11 +36,11 @@ public class S3Test {
 
 		final S3Client s3 = new KolichS3Client(client, key, secret);
 
-		final Either<HttpFailure, Bucket> bucket = s3.createBucket("foobar.kolich.local");
-		if (bucket.success()) {
+		final Option<HttpFailure> bucket = s3.createBucket("foobar.kolich.local");
+		if (bucket.isNone()) {
 			System.out.println("created successfully.");
 		} else {
-			System.err.println(bucket.left().getStatusCode());
+			System.err.println(bucket.get().getStatusCode());
 		}
 		
 		final Either<HttpFailure,List<Bucket>> list = s3.listBuckets();
@@ -78,11 +79,14 @@ public class S3Test {
 			}
 		}
 		
-		final Either<HttpFailure,Void> delete = s3.deleteObject(
+		final Option<HttpFailure> delete = s3.deleteObject(
 			"foobar.kolich.local",
 			"test", "foo", "bar/kewl", "test.txt");
-		if(delete.success()) {
+		if(delete.isNone()) {
 			System.out.println("Delete object worked too!");
+		} else {
+			System.out.println("Delete object failed: " +
+				delete.get().getStatusCode());
 		}
 		
 		/*
@@ -100,12 +104,13 @@ public class S3Test {
 		}
 		*/
 		
-		final Either<HttpFailure, Void> deleteBucket =
+		final Option<HttpFailure> deleteBucket =
 			s3.deleteBucket("foobar.kolich.local");
-		if (deleteBucket.success()) {
+		if (deleteBucket.isNone()) {
 			System.out.println("deleted bucket!");
 		} else {
-			System.err.println("Failed to delete bucket");
+			System.err.println("Failed to delete bucket: " +
+				deleteBucket.get().getStatusCode());
 		}
 
 	}

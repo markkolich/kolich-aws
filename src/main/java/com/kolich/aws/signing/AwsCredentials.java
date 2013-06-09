@@ -56,8 +56,9 @@ public final class AwsCredentials {
 	
 	@Override
 	public String toString() {
-		return String.format("AwsCredentials(%s, %s)", key_,
-			abbreviate(secret_, 10));
-	}
+    	return String.format("%s(%s, %s)",
+    		getClass().getSimpleName(),
+    		key_, abbreviate(secret_, 10));
+    }
 
 }

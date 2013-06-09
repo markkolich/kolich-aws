@@ -36,6 +36,9 @@ import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.RawMessage;
 import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.amazonaws.services.simpleemail.model.SendRawEmailResult;
+import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
+import com.kolich.http.common.response.HttpFailure;
 
 public interface SESClient {
 	
@@ -44,27 +47,27 @@ public interface SESClient {
 	 * email message to be sent to the specified address.
 	 * @param emailAddress the email address to be verified
 	 */
-	public void verifyEmailAddress(final String emailAddress);
+	public Option<HttpFailure> verifyEmailAddress(final String emailAddress);
 	
 	/**
 	 * Deletes the specified email address from the list of
 	 * verified addresses.
 	 * @param emailAddress the email address to be deleted
 	 */
-	public void deleteVerifiedEmailAddress(final String emailAddress);
+	public Option<HttpFailure> deleteVerifiedEmailAddress(final String emailAddress);
 	
 	/**
 	 * Returns a list containing all of the email addresses that
 	 * have been verified.
 	 * @return the email addresses that have been verified.
 	 */
-	public ListVerifiedEmailAddressesResult listVerifiedEmailAddresses();
+	public Either<HttpFailure,ListVerifiedEmailAddressesResult> listVerifiedEmailAddresses();
 	
 	/**
 	 * Returns the user's current sending limits.
 	 * @return the user's email sending limits
 	 */
-	public GetSendQuotaResult getSendQuota();
+	public Either<HttpFailure,GetSendQuotaResult> getSendQuota();
 
 	/**
 	 * Returns the user's sending statistics. The result is a list of
@@ -73,7 +76,7 @@ public interface SESClient {
 	 * interval.
 	 * @return the user's sending statistics
 	 */
-	public GetSendStatisticsResult getSendStatistics();
+	public Either<HttpFailure,GetSendStatisticsResult> getSendStatistics();
 	
 	/**
 	 * A convenience method to send a plain-text UTF-8 encoded email
@@ -90,8 +93,9 @@ public interface SESClient {
 	 * @param body
 	 * @return
 	 */
-	public SendEmailResult sendEmail(final String from, final String to,
-		final String returnPath, final String subject, final String body);
+	public Either<HttpFailure,SendEmailResult> sendEmail(final String from,
+		final String to, final String returnPath, final String subject,
+		final String body);
 	
 	/**
 	 * Composes an email message based on input data, and then
@@ -110,9 +114,10 @@ public interface SESClient {
 	 * @param senderAddress the sender's email address
 	 * @return
 	 */
-	public SendEmailResult sendEmail(final Destination destination,
-		final Message message, final List<String> replyToAddresses,
-			final String returnPath, final String senderAddress);
+	public Either<HttpFailure,SendEmailResult> sendEmail(
+		final Destination destination, final Message message,
+		final List<String> replyToAddresses, final String returnPath,
+		final String senderAddress);
 	
 	/**
 	 * Sends an email message, with header and content specified by
@@ -130,7 +135,8 @@ public interface SESClient {
 	 * @param senderAddress the sender's email address
 	 * @return
 	 */
-	public SendRawEmailResult sendRawEmail(final RawMessage message,
-		final String senderAddress, final List<String> destinations);
+	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(
+		final RawMessage message, final String senderAddress,
+		final List<String> destinations);
 		
 }

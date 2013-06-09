@@ -28,6 +28,7 @@ package com.kolich.aws.services.s3.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.kolich.aws.services.s3.S3Region.US_EAST;
 import static com.kolich.aws.transport.AwsHeaders.S3_REDUCED_REDUNDANCY;
 import static com.kolich.aws.transport.AwsHeaders.S3_VERSION_ID;
 import static com.kolich.aws.transport.AwsHeaders.STORAGE_CLASS;
@@ -64,18 +65,17 @@ import com.amazonaws.services.s3.model.transform.Unmarshallers;
 import com.kolich.aws.services.AbstractAwsService;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.services.s3.S3Client;
+import com.kolich.aws.services.s3.S3Region;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.None;
+import com.kolich.common.functional.option.Option;
+import com.kolich.common.functional.option.Some;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
 
 public final class KolichS3Client extends AbstractAwsService implements S3Client {
-	
-	/**
-	 * Default hostname for the S3 service endpoint.
-	 */
-    private static final String S3_DEFAULT_ENDPOINT = "s3.amazonaws.com";
-    
+	    
     /**
      * Specifies the key to start with when listing objects in a bucket.
      * Amazon S3 lists objects in alphabetical order.
@@ -101,14 +101,19 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	private final HttpClient client_;
 	
 	public KolichS3Client(final HttpClient client,
-		final AbstractAwsSigner signer) {
-		super(signer, S3_DEFAULT_ENDPOINT);
+		final AbstractAwsSigner signer, final S3Region region) {
+		super(signer, region.getApiEndpoint());
 		client_ = client;
 	}
 	
 	public KolichS3Client(final HttpClient client, final String key,
+		final String secret, final S3Region region) {
+		this(client, new KolichS3Signer(key, secret), region);
+	}
+	
+	public KolichS3Client(final HttpClient client, final String key,
 		final String secret) {
-		this(client, new KolichS3Signer(key, secret));
+		this(client, new KolichS3Signer(key, secret), US_EAST);
 	}
 	
 	private abstract class AwsS3HttpClosure<S> extends AwsBaseHttpClosure<S> {
@@ -153,11 +158,23 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 		public final Either<HttpFailure,S> put() {
 			return put((String[])null);
 		}
+		public final Option<HttpFailure> putOption() {
+			final Either<HttpFailure,S> either = put();
+			return either.success() ?
+				None.<HttpFailure>none() :
+				Some.<HttpFailure>some(either.left());
+		}
 		public final Either<HttpFailure,S> delete(final String... path) {
 			return super.delete(buildPath(path));
 		}
-		public final Either<HttpFailure,S> delete() {
-			return delete((String[])null);
+		public final Option<HttpFailure> deleteOption(final String... path) {
+			final Either<HttpFailure,S> either = delete(path);
+			return either.success() ?
+				None.<HttpFailure>none() :
+				Some.<HttpFailure>some(either.left());
+		}
+		public final Option<HttpFailure> deleteOption() {
+			return deleteOption((String[])null);
 		}
 		private final String buildPath(final String... path) {
 			final StringBuilder sb = new StringBuilder(SLASH_STRING);
@@ -222,7 +239,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	}
 
 	@Override
-	public Either<HttpFailure,Bucket> createBucket(final String bucketName) {
+	public Option<HttpFailure> createBucket(final String bucketName) {
     	return new AwsS3HttpClosure<Bucket>(client_, SC_OK, bucketName) {
     		@Override
 			public void validate() throws Exception {
@@ -230,15 +247,11 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
 					"did not match expected bucket name pattern.");
 			}
-			@Override
-			public Bucket success(final HttpSuccess success) throws Exception {
-				return new Bucket(bucketName);
-			}
-		}.put();
+		}.putOption();
 	}
 
 	@Override
-	public Either<HttpFailure,Void> deleteBucket(final String bucketName) {
+	public Option<HttpFailure> deleteBucket(final String bucketName) {
     	return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
     		@Override
 			public void validate() throws Exception {
@@ -246,7 +259,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
 					"did not match expected bucket name pattern.");
 			}
-    	}.delete();
+    	}.deleteOption();
 	}
 
 	@Override
@@ -321,7 +334,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	}
 
 	@Override
-	public Either<HttpFailure,Void> deleteObject(final String bucketName,
+	public Option<HttpFailure> deleteObject(final String bucketName,
 		final String... path) {
 		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
 			@Override
@@ -330,7 +343,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 				checkState(isValidBucketName(bucketName), "Invalid bucket name, " +
 					"did not match expected bucket name pattern.");
 			}
-		}.delete(path);
+		}.deleteOption(path);
 	}
 	
 	@Override
