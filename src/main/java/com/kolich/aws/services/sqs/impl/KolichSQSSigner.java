@@ -54,7 +54,7 @@ import com.kolich.common.date.RFC822DateFormat;
 
 public final class KolichSQSSigner extends AbstractAwsSigner {
 	
-	private static final String SQS_DEFAULT_VERSION = "2009-02-01";
+	private static final String SQS_DEFAULT_VERSION = "2012-11-05";
 	private static final String SQS_DEFAULT_SIGNATURE_VERSION = "2";
 	
 	private static final String SQS_PARAM_AWS_ACCESSKEY_ID = "AWSAccessKeyId";
@@ -154,5 +154,12 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 				"query string.", e);
 		}
 	}
+	
+	@Override
+	public String toString() {
+    	return String.format("%s(%s, %s)",
+    		getClass().getSimpleName(),
+    		credentials_.toString(), signer_.toString());
+    }
 
 }

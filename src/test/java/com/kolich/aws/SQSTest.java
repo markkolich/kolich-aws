@@ -26,12 +26,21 @@
 
 package com.kolich.aws;
 
+import java.net.URI;
+import java.util.Date;
+
 import org.apache.http.client.HttpClient;
 
+import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.kolich.aws.services.sqs.SQSClient;
 import com.kolich.aws.services.sqs.impl.KolichSQSClient;
+import com.kolich.common.date.ISO8601DateFormat;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
 import com.kolich.http.blocking.KolichDefaultHttpClient.KolichHttpClientFactory;
 import com.kolich.http.common.response.HttpFailure;
 
@@ -40,7 +49,7 @@ public class SQSTest {
 	private static final String AWS_ACCESS_KEY_PROPERTY = "aws.key";
     private static final String AWS_SECRET_PROPERTY = "aws.secret";
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
 		final String key = System.getProperty(AWS_ACCESS_KEY_PROPERTY);
 		final String secret = System.getProperty(AWS_SECRET_PROPERTY);
@@ -53,6 +62,15 @@ public class SQSTest {
 		final HttpClient client = KolichHttpClientFactory.getNewInstanceNoProxySelector();
 		
 		final SQSClient sqs = new KolichSQSClient(client, key, secret);
+				
+		URI queueURI = null;
+		final Either<HttpFailure,CreateQueueResult> create = sqs.createQueue("----__________");
+		if(create.success()) {
+			System.out.println("Created queue successfully: " + create.right().getQueueUrl());
+			queueURI = URI.create(create.right().getQueueUrl());
+		} else {
+			System.err.println("Failed to create queue: " + create.left().getStatusCode());
+		}
 		
 		final Either<HttpFailure,ListQueuesResult> list = sqs.listQueues();
 		if(list.success()) {
@@ -63,7 +81,53 @@ public class SQSTest {
 			System.err.println("Listing queues failed.");
 		}
 		
+		for(int i = 0; i < 5; i++) {
+			final Either<HttpFailure,SendMessageResult> send =
+				sqs.sendMessage(queueURI, "test message: " +
+					ISO8601DateFormat.format(new Date()));
+			if(send.success()) {
+				System.out.println("Sent message [" + i + "]: " +
+					send.right().getMessageId());			
+			} else {
+				System.err.println("Failed to send message.");
+			}
+		}
 		
+		for(int fetched = 0, error = 0; fetched < 5 && error == 0;) {
+			final Either<HttpFailure,ReceiveMessageResult> messages = sqs.receiveMessage(queueURI, 10, 5);
+			if(messages.success()) {
+				fetched += messages.right().getMessages().size();
+				System.out.println("Loaded " + messages.right().getMessages().size() + " messages.");
+				for(final Message m : messages.right().getMessages()) {
+					System.out.println("Message [" + m.getMessageId() + "]: " + m.getBody());
+					final Option<HttpFailure> deleteMsg =
+						sqs.deleteMessage(queueURI, m.getReceiptHandle());
+					if(deleteMsg.isNone()) {
+						System.out.println("Deleted message [" + m.getMessageId() + "]");
+					} else {
+						System.err.println("Failed to delete message: " + m.getReceiptHandle());
+					}
+				}
+			} else {
+				error = 1;
+				System.err.println("Loading messages failed.");
+			}
+		}
+		
+		System.out.println("No messages should be on queue... long poll waiting!");
+		final Either<HttpFailure,ReceiveMessageResult> lp = sqs.receiveMessage(queueURI, 20, 5);
+		if(lp.success()) {
+			System.out.println("Long poll finished waiting successfully.");
+		} else {
+			System.err.println("Failed to long poll wait.");
+		}
+		
+		final Option<HttpFailure> delete = sqs.deleteQueue(queueURI);
+		if(delete.isNone()) {
+			System.out.println("Deleted queue successfully: " + queueURI);
+		} else {
+			System.err.println("Deletion of queue failed: " + queueURI);
+		}
 
 	}
 

@@ -37,6 +37,7 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.kolich.common.functional.either.Either;
+import com.kolich.common.functional.option.Option;
 import com.kolich.common.util.URLEncodingUtils;
 import com.kolich.http.common.response.HttpFailure;
 
@@ -74,14 +75,14 @@ public interface S3Client {
 	 * @param bucketName the name of the bucket
 	 * @return a {@link Bucket} object
 	 */
-	public Either<HttpFailure,Bucket> createBucket(final String bucketName);
+	public Option<HttpFailure> createBucket(final String bucketName);
 
 	/**
 	 * Without the "recursive" parameter, we don't try to delete the
 	 * contents first, and we will immediately fail if it is not empty.
 	 * @param bucketName the name of the bucket to delete
 	 */
-	public Either<HttpFailure,Void> deleteBucket(final String bucketName);
+	public Option<HttpFailure> deleteBucket(final String bucketName);
 	
 	/**
 	 * Put an object into a bucket.
@@ -127,7 +128,7 @@ public interface S3Client {
 	 * "/" path separator then properly URL encoded to produce a unique
 	 * path to a key in the bucket
 	 */
-	public Either<HttpFailure,Void> deleteObject(final String bucketName,
+	public Option<HttpFailure> deleteObject(final String bucketName,
 		final String... path);
 	
 	/**

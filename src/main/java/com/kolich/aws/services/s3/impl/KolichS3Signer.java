@@ -218,4 +218,11 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     	return unmodifiableMap(map);
     }
     
+    @Override
+	public String toString() {
+    	return String.format("%s(%s, %s)",
+    		getClass().getSimpleName(),
+    		credentials_.toString(), signer_.toString());
+    }
+    
 }
