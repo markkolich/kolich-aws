@@ -88,7 +88,8 @@ public abstract class AbstractAwsService {
 		return URI.create(apiEndPoint);
 	}
 	
-	protected final void signRequest(final AwsHttpRequest request) {
+	protected final void signRequest(final AwsHttpRequest request)
+		throws Exception {
 		checkNotNull(request, "Request cannot be null!");
 		// Compute the final endpoint for the request and set it.
 		request.setURI(getFinalEndpoint(request));

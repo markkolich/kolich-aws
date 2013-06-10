@@ -154,15 +154,21 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 			return (unmarshaller_ != null) ? unmarshall(success) : null;
 		}
 		private final S unmarshall(final HttpSuccess success) throws Exception {
-	    	final XMLInputFactory xmlInputFactory = newInstance();
-    		final XMLEventReader reader = xmlInputFactory
-    			.createXMLEventReader(success.getContent());
-    		final StaxUnmarshallerContext stax =
-    			new StaxUnmarshallerContext(reader);
-    		stax.registerMetadataExpression("ResponseMetadata/RequestId",
-    			2, AWS_REQUEST_ID);
-    		stax.registerMetadataExpression("requestId", 2, AWS_REQUEST_ID);
-    		return unmarshaller_.unmarshall(stax);
+			XMLEventReader reader = null;
+			try {
+				final XMLInputFactory xmlInputFactory = newInstance();
+	    		reader = xmlInputFactory.createXMLEventReader(success.getContent());
+	    		final StaxUnmarshallerContext stax =
+	    			new StaxUnmarshallerContext(reader);
+	    		stax.registerMetadataExpression("ResponseMetadata/RequestId",
+	    			2, AWS_REQUEST_ID);
+	    		stax.registerMetadataExpression("requestId", 2, AWS_REQUEST_ID);
+	    		return unmarshaller_.unmarshall(stax);
+			} finally {
+				if(reader != null) {
+					reader.close();
+				}
+			}
 	    }
 		public final Either<HttpFailure,S> post() {
 			return post(SLASH_STRING);

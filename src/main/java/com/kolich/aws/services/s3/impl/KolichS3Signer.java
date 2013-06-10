@@ -93,7 +93,8 @@ public final class KolichS3Signer extends AbstractAwsSigner {
     	});
     
     @Override
-	public void signHttpRequest(final AwsHttpRequest request) {
+	public void signHttpRequest(final AwsHttpRequest request)
+		throws Exception {
     	// Add a Date header to the request.
     	request.addHeader(DATE, RFC822DateFormat.format(new Date()));
     	// Only add a Content-Type header to the request if one is not

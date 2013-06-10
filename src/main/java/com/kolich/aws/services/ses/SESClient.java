@@ -54,14 +54,16 @@ public interface SESClient {
 	 * verified addresses.
 	 * @param emailAddress the email address to be deleted
 	 */
-	public Option<HttpFailure> deleteVerifiedEmailAddress(final String emailAddress);
+	public Option<HttpFailure> deleteVerifiedEmailAddress(
+		final String emailAddress);
 	
 	/**
 	 * Returns a list containing all of the email addresses that
 	 * have been verified.
 	 * @return the email addresses that have been verified.
 	 */
-	public Either<HttpFailure,ListVerifiedEmailAddressesResult> listVerifiedEmailAddresses();
+	public Either<HttpFailure,ListVerifiedEmailAddressesResult>
+		listVerifiedEmailAddresses();
 	
 	/**
 	 * Returns the user's current sending limits.
@@ -117,7 +119,7 @@ public interface SESClient {
 	public Either<HttpFailure,SendEmailResult> sendEmail(
 		final Destination destination, final Message message,
 		final List<String> replyToAddresses, final String returnPath,
-		final String senderAddress);
+		final String from);
 	
 	/**
 	 * Sends an email message, with header and content specified by
@@ -136,7 +138,7 @@ public interface SESClient {
 	 * @return
 	 */
 	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(
-		final RawMessage message, final String senderAddress,
+		final RawMessage message, final String from,
 		final List<String> destinations);
 		
 }
