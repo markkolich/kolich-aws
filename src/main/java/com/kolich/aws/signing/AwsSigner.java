@@ -26,6 +26,8 @@
 
 package com.kolich.aws.signing;
 
+import com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm;
+
 public interface AwsSigner {
 
 	/**
@@ -35,5 +37,11 @@ public interface AwsSigner {
 	 * @param input the input String to sign
 	 */
 	public String sign(final AwsCredentials credentials, final String input);
+	
+	/**
+	 * Returns the underlying signing algorithm used by this signer
+	 * instance.
+	 */
+	public AwsSigningAlgorithm getAlgorithm();
 		
 }

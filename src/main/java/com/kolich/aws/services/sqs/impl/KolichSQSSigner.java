@@ -81,7 +81,8 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 	}
 
 	@Override
-	public void signHttpRequest(final AwsHttpRequest request) {
+	public void signHttpRequest(final AwsHttpRequest request)
+		throws Exception {
 		final Date now = new Date();
 		request.addHeader(DATE, RFC822DateFormat.format(now));
     	// Only add a Content-Type header to the request if one is not
@@ -112,13 +113,8 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 		final String signature = signer_.sign(credentials_, toSign);
 		params.add(new SortableBasicNameValuePair(SQS_PARAM_SIGNATURE,
 			signature));		
-		try {
-			((HttpPost)request.getRequestBase()).setEntity(
-				new UrlEncodedFormEntity(params, UTF_8));
-		} catch (Exception e) {
-			throw new KolichAwsException("Failed to set SQS POST " +
-				"request entity.", e);
-		}
+		((HttpPost)request.getRequestBase())
+			.setEntity(new UrlEncodedFormEntity(params, UTF_8));
 	}
 	
 	private static final String getSQSCanonicalString(

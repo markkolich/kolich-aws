@@ -62,6 +62,7 @@ public abstract class AbstractAwsSigner {
 	 * Authorization HTTP request header.
 	 * @param request
 	 */
-	public abstract void signHttpRequest(final AwsHttpRequest request);
+	public abstract void signHttpRequest(final AwsHttpRequest request)
+		throws Exception;
 	
 }
