@@ -49,7 +49,9 @@ public final class KolichAwsSigner implements AwsSigner {
 	
 	@Override
 	public String toString() {
-		return String.format("KolichAwsSigner(%s)", algorithm_.toString());
-	}
+    	return String.format("%s(%s)",
+    		getClass().getSimpleName(),
+    		algorithm_.toString());
+    }
 	
 }
