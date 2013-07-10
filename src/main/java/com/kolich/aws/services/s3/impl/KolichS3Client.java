@@ -336,7 +336,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	@Override
 	public Option<HttpFailure> deleteObject(final String bucketName,
 		final String... path) {
-		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
+		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName) {
 			@Override
 			public void validate() throws Exception {
 				checkNotNull(bucketName, "Bucket name cannot be null.");
