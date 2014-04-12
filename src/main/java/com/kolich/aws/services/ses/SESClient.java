@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,19 +26,12 @@
 
 package com.kolich.aws.services.ses;
 
-import java.util.List;
-
-import com.amazonaws.services.simpleemail.model.Destination;
-import com.amazonaws.services.simpleemail.model.GetSendQuotaResult;
-import com.amazonaws.services.simpleemail.model.GetSendStatisticsResult;
-import com.amazonaws.services.simpleemail.model.ListVerifiedEmailAddressesResult;
-import com.amazonaws.services.simpleemail.model.Message;
-import com.amazonaws.services.simpleemail.model.RawMessage;
-import com.amazonaws.services.simpleemail.model.SendEmailResult;
-import com.amazonaws.services.simpleemail.model.SendRawEmailResult;
+import com.amazonaws.services.simpleemail.model.*;
 import com.kolich.common.functional.either.Either;
 import com.kolich.common.functional.option.Option;
 import com.kolich.http.common.response.HttpFailure;
+
+import java.util.List;
 
 public interface SESClient {
 	
@@ -54,16 +47,14 @@ public interface SESClient {
 	 * verified addresses.
 	 * @param emailAddress the email address to be deleted
 	 */
-	public Option<HttpFailure> deleteVerifiedEmailAddress(
-		final String emailAddress);
+	public Option<HttpFailure> deleteVerifiedEmailAddress(final String emailAddress);
 	
 	/**
 	 * Returns a list containing all of the email addresses that
 	 * have been verified.
 	 * @return the email addresses that have been verified.
 	 */
-	public Either<HttpFailure,ListVerifiedEmailAddressesResult>
-		listVerifiedEmailAddresses();
+	public Either<HttpFailure,ListVerifiedEmailAddressesResult> listVerifiedEmailAddresses();
 	
 	/**
 	 * Returns the user's current sending limits.
@@ -88,16 +79,12 @@ public interface SESClient {
 	 * caller needs finer control over the message content, destinations,
 	 * bounce back return paths, etc. then they should not use this method
 	 * but one of the the more finer grained methods.
-	 * @param from
-	 * @param to
-	 * @param returnPath
-	 * @param subject
-	 * @param body
-	 * @return
 	 */
 	public Either<HttpFailure,SendEmailResult> sendEmail(final String from,
-		final String to, final String returnPath, final String subject,
-		final String body);
+                                                         final String to,
+                                                         final String returnPath,
+                                                         final String subject,
+                                                         final String body);
 	
 	/**
 	 * Composes an email message based on input data, and then
@@ -113,13 +100,13 @@ public interface SESClient {
 	 * recipient, then an error message will be returned from the
 	 * recipient's ISP; this message will then be forwarded to the email
 	 * address specified by the ReturnPath parameter
-	 * @param senderAddress the sender's email address
 	 * @return
 	 */
-	public Either<HttpFailure,SendEmailResult> sendEmail(
-		final Destination destination, final Message message,
-		final List<String> replyToAddresses, final String returnPath,
-		final String from);
+	public Either<HttpFailure,SendEmailResult> sendEmail(final Destination destination,
+                                                         final Message message,
+                                                         final List<String> replyToAddresses,
+                                                         final String returnPath,
+                                                         final String from);
 	
 	/**
 	 * Sends an email message, with header and content specified by
@@ -134,11 +121,10 @@ public interface SESClient {
 	 * MIME content types must be among those supported by Amazon SES. Refer
 	 * to the Amazon SES Developer Guide for more details. Content must be
 	 * base64-encoded, if MIME requires it.
-	 * @param senderAddress the sender's email address
 	 * @return
 	 */
-	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(
-		final RawMessage message, final String from,
-		final List<String> destinations);
+	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(final RawMessage message,
+                                                               final String from,
+                                                               final List<String> destinations);
 		
 }

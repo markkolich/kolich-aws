@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,8 +26,6 @@
 
 package com.kolich.aws.services.sqs;
 
-import java.net.URI;
-
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
@@ -35,6 +33,8 @@ import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.kolich.common.functional.either.Either;
 import com.kolich.common.functional.option.Option;
 import com.kolich.http.common.response.HttpFailure;
+
+import java.net.URI;
 
 public interface SQSClient {
 
@@ -50,11 +50,10 @@ public interface SQSClient {
 	 * @param defaultVisibilityTimeout the default message visibility timeout
 	 * @return a {@link CreateQueueResult} representing the new queue
 	 */
-	public Either<HttpFailure,CreateQueueResult> createQueue(
-		final String queueName, final Integer defaultVisibilityTimeout);
+	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName,
+                                                             final Integer defaultVisibilityTimeout);
 	
-	public Either<HttpFailure,CreateQueueResult> createQueue(
-		final String queueName);
+	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName);
 	
 	/**
 	 * Delete a queue.
@@ -69,7 +68,7 @@ public interface SQSClient {
 	 * @return
 	 */
 	public Either<HttpFailure,SendMessageResult> sendMessage(final URI queueURI,
-		final String message);
+                                                             final String message);
 	
 	/**
 	 * Receive a message.
@@ -78,15 +77,14 @@ public interface SQSClient {
 	 * from the queue
 	 * @return
 	 */
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI, final Integer longPollWaitSecs,
-		final Integer maxNumberOfMessages);
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI,
+                                                                   final Integer longPollWaitSecs,
+                                                                   final Integer maxNumberOfMessages);
 	
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI, final Integer longPollWaitSecs);
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI,
+                                                                   final Integer longPollWaitSecs);
 	
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI);
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI);
 	
 	/**
 	 * Delete a message.
@@ -95,7 +93,7 @@ public interface SQSClient {
 	 * to delete
 	 */
 	public Option<HttpFailure> deleteMessage(final URI queueURI,
-		final String receiptHandle);
+                                             final String receiptHandle);
 	
 	/**
 	 * Change a message's visiblity in a queue.
@@ -105,6 +103,7 @@ public interface SQSClient {
 	 * @param visibilityTimeout the new visibility timeout value
 	 */
 	public Option<HttpFailure> changeMessageVisibility(final URI queueURI,
-		final String receiptHandle, final Integer visibilityTimeout);
+                                                       final String receiptHandle,
+                                                       final Integer visibilityTimeout);
 		
 }

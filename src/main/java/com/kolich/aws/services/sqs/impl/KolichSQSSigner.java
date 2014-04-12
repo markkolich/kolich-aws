@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,22 +26,6 @@
 
 package com.kolich.aws.services.sqs.impl;
 
-import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA256;
-import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR_UNIX;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.apache.http.HttpHeaders.DATE;
-import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
-
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-
 import com.kolich.aws.KolichAwsException;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
@@ -51,6 +35,21 @@ import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.aws.transport.SortableBasicNameValuePair;
 import com.kolich.common.date.ISO8601DateFormat;
 import com.kolich.common.date.RFC822DateFormat;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA256;
+import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR_UNIX;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpHeaders.DATE;
+import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 
 public final class KolichSQSSigner extends AbstractAwsSigner {
 	
@@ -68,7 +67,7 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 		APPLICATION_FORM_URLENCODED.toString();
 	
 	public KolichSQSSigner(final AwsCredentials credentials,
-		final AwsSigner signer) {
+                           final AwsSigner signer) {
 		super(credentials, signer);
 	}
 	
@@ -76,13 +75,13 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 		this(credentials, new KolichAwsSigner(HmacSHA256));
 	}
 	
-	public KolichSQSSigner(final String key, final String secret) {
+	public KolichSQSSigner(final String key,
+                           final String secret) {
 		this(new AwsCredentials(key, secret));
 	}
 
 	@Override
-	public void signHttpRequest(final AwsHttpRequest request)
-		throws Exception {
+	public void signHttpRequest(final AwsHttpRequest request) throws Exception {
 		final Date now = new Date();
 		request.addHeader(DATE, RFC822DateFormat.format(now));
     	// Only add a Content-Type header to the request if one is not
@@ -117,9 +116,8 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 			.setEntity(new UrlEncodedFormEntity(params, UTF_8));
 	}
 	
-	private static final String getSQSCanonicalString(
-		final List<SortableBasicNameValuePair> params,
-		final AwsHttpRequest request) {
+	private static final String getSQSCanonicalString(final List<SortableBasicNameValuePair> params,
+                                                      final AwsHttpRequest request) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(request.getMethod()).append(LINE_SEPARATOR_UNIX);
 		sb.append(request.getURI().getHost().toLowerCase())
@@ -129,8 +127,7 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
         return sb.toString();
 	}
 	
-	private static final String getSQSCanonicalPath(
-		final AwsHttpRequest request) {
+	private static final String getSQSCanonicalPath(final AwsHttpRequest request) {
 		String path = request.getURI().getPath();
 		if(path == null || path.isEmpty()) {
 			path = "/";
@@ -138,15 +135,16 @@ public final class KolichSQSSigner extends AbstractAwsSigner {
 		return path;
 	}
 	
-	private static final String getSQSCanonicalQuery(
-		final List<SortableBasicNameValuePair> params) {
+	private static final String getSQSCanonicalQuery(final List<SortableBasicNameValuePair> params) {
 		final ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			new UrlEncodedFormEntity(params, UTF_8).writeTo(os);
-			return os.toString(UTF_8).replace("+", "%20")
-				.replace("*", "%2A").replace("%7E", "~");
+			return os.toString(UTF_8)
+                .replace("+", "%20")
+				.replace("*","%2A")
+                .replace("%7E", "~");
 		} catch (Exception e) {
-			throw new KolichAwsException("Failed to get SQS cannonical " +
+			throw new KolichAwsException("Failed to get SQS canonical " +
 				"query string.", e);
 		}
 	}

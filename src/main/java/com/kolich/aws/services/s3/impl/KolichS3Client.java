@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,42 +26,11 @@
 
 package com.kolich.aws.services.s3.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.kolich.aws.services.s3.S3Region.US_EAST;
-import static com.kolich.aws.transport.AwsHeaders.S3_REDUCED_REDUNDANCY;
-import static com.kolich.aws.transport.AwsHeaders.S3_VERSION_ID;
-import static com.kolich.aws.transport.AwsHeaders.STORAGE_CLASS;
-import static com.kolich.common.util.URLEncodingUtils.urlDecode;
-import static com.kolich.common.util.URLEncodingUtils.urlEncode;
-import static java.util.regex.Pattern.compile;
-import static java.util.regex.Pattern.quote;
-import static org.apache.commons.io.IOUtils.copyLarge;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.apache.http.HttpStatus.SC_OK;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.apache.http.Header;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
-
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.transform.Unmarshallers;
+import com.google.common.collect.Lists;
 import com.kolich.aws.services.AbstractAwsService;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.services.s3.S3Client;
@@ -73,8 +42,37 @@ import com.kolich.common.functional.option.Option;
 import com.kolich.common.functional.option.Some;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
+import org.apache.http.Header;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 
-public final class KolichS3Client extends AbstractAwsService implements S3Client {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.kolich.aws.services.s3.S3Region.US_EAST;
+import static com.kolich.aws.transport.AwsHeaders.*;
+import static com.kolich.common.util.URLEncodingUtils.urlDecode;
+import static com.kolich.common.util.URLEncodingUtils.urlEncode;
+import static java.util.regex.Pattern.compile;
+import static java.util.regex.Pattern.quote;
+import static org.apache.commons.io.IOUtils.copyLarge;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpStatus.SC_OK;
+
+public final class KolichS3Client extends AbstractAwsService
+    implements S3Client {
 	    
     /**
      * Specifies the key to start with when listing objects in a bucket.
@@ -101,29 +99,35 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	private final HttpClient client_;
 	
 	public KolichS3Client(final HttpClient client,
-		final AbstractAwsSigner signer, final S3Region region) {
+                          final AbstractAwsSigner signer,
+                          final S3Region region) {
 		super(signer, region.getApiEndpoint());
 		client_ = client;
 	}
 	
-	public KolichS3Client(final HttpClient client, final String key,
-		final String secret, final S3Region region) {
+	public KolichS3Client(final HttpClient client,
+                          final String key,
+                          final String secret,
+                          final S3Region region) {
 		this(client, new KolichS3Signer(key, secret), region);
 	}
 	
-	public KolichS3Client(final HttpClient client, final String key,
-		final String secret) {
+	public KolichS3Client(final HttpClient client,
+                          final String key,
+                          final String secret) {
 		this(client, new KolichS3Signer(key, secret), US_EAST);
 	}
 	
 	private abstract class AwsS3HttpClosure<S> extends AwsBaseHttpClosure<S> {
 		private final String bucketName_;
-		public AwsS3HttpClosure(final HttpClient client, final int expectStatus,
-			final String bucketName) {
+		public AwsS3HttpClosure(final HttpClient client,
+                                final int expectStatus,
+                                final String bucketName) {
 			super(client, expectStatus);
 			bucketName_ = bucketName;
 		}
-		public AwsS3HttpClosure(final HttpClient client, final int expectStatus) {
+		public AwsS3HttpClosure(final HttpClient client,
+                                final int expectStatus) {
 			this(client, expectStatus, null);
 		}
 		@Override
@@ -198,7 +202,8 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 
 	@Override
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
-		final String marker, final String... path) {		
+                                                         final String marker,
+                                                         final String... path) {
 		return new AwsS3HttpClosure<ObjectListing>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -229,7 +234,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
-		final String marker) {
+                                                         final String marker) {
 		return listObjects(bucketName, marker, (String[])null);
 	}
 	
@@ -264,8 +269,11 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final boolean rrs, final ContentType type, final InputStream input,
-		final long contentLength, final String... path) {
+                                                         final boolean rrs,
+                                                         final ContentType type,
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path) {
 		return new AwsS3HttpClosure<PutObjectResult>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -301,21 +309,27 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final ContentType type, final InputStream input,
-		final long contentLength, final String... path) {
+                                                         final ContentType type,
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path) {
 		return putObject(bucketName, false, type, input, contentLength, path);
 	}
 	
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final InputStream input, final long contentLength, final String... path) {
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path) {
 		return putObject(bucketName, null, input, contentLength, path);
 	}
 	
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final boolean rrs, final ContentType type, final byte[] object,
-		final String... path) {
+                                                         final boolean rrs,
+                                                         final ContentType type,
+                                                         final byte[] object,
+                                                         final String... path) {
 		return putObject(bucketName, rrs, type,
 			new ByteArrayInputStream(object), object.length,
 			path);
@@ -323,19 +337,22 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final ContentType type, final byte[] object, final String... path) {
+                                                         final ContentType type,
+                                                         final byte[] object,
+                                                         final String... path) {
 		return putObject(bucketName, false, type, object, path);
 	}
 	
 	@Override
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final byte[] object, final String... path) {
+                                                         final byte[] object,
+                                                         final String... path) {
 		return putObject(bucketName, null, object, path);
 	}
 
 	@Override
 	public Option<HttpFailure> deleteObject(final String bucketName,
-		final String... path) {
+                                            final String... path) {
 		return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -348,7 +365,8 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public Either<HttpFailure,List<Header>> getObject(final String bucketName,
-		final OutputStream destination, final String... path) {
+                                                      final OutputStream destination,
+                                                      final String... path) {
 		return new AwsS3HttpClosure<List<Header>>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -370,7 +388,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public Either<HttpFailure,byte[]> getObject(final String bucketName,
-		final String... path) {
+                                                final String... path) {
 		return new AwsS3HttpClosure<byte[]>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -393,7 +411,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	
 	@Override
 	public boolean objectExists(final String bucketName,
-		final String... path) {
+                                final String... path) {
 		return new AwsS3HttpClosure<Void>(client_, SC_OK, bucketName) {
 			@Override
 			public void validate() throws Exception {
@@ -451,7 +469,7 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	 */
 	public static final String[] pathStringToVarargs(final String path) {
 		checkNotNull(path, "The path string list cannot be null.");
-		final List<String> prl = new ArrayList<String>();
+		final List<String> prl = Lists.newLinkedList();
 		for(final String p : path.split(quote(SLASH_STRING))) {
 			if(!EMPTY_STRING.equals(p)) {
 				prl.add(urlDecode(p));
@@ -465,11 +483,11 @@ public final class KolichS3Client extends AbstractAwsService implements S3Client
 	 * a new String[] array representing that list.
 	 */
 	public static final String[] appendKeyToPath(final String key,
-		final String... path) {
+                                                 final String... path) {
 		checkNotNull(key, "The key to append cannot be null.");
 		checkNotNull(path, "The path string list cannot be null.");
-		final List<String> prl = new ArrayList<String>(Arrays.asList(path));
-		// The entity key becomes the last element in the prefix list.
+		final List<String> prl = Lists.newArrayList(Arrays.asList(path));
+        // The entity key becomes the last element in the prefix list.
     	prl.add(key);
     	return prl.toArray(new String[]{});
 	}

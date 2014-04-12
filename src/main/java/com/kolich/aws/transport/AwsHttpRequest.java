@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,29 +26,27 @@
 
 package com.kolich.aws.transport;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.unmodifiableList;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.collect.ImmutableList;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpRequestBase;
+
+import java.net.URI;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class AwsHttpRequest {
 	
 	private final HttpRequestBase request_;	
-	private final List<SortableBasicNameValuePair> params_;	
-	private final String resource_;
+	private final ImmutableList.Builder<SortableBasicNameValuePair> paramBuilder_;
+    private final String resource_;
 	
 	public AwsHttpRequest(final HttpRequestBase request,
-		final String resource) {
-		checkNotNull(request, "The request cannot be null.");
-		request_ = request;
+                          final String resource) {
+        request_ = checkNotNull(request, "The request cannot be null.");
 		resource_ = resource;
-		params_ = new ArrayList<SortableBasicNameValuePair>();
-	}
+        paramBuilder_ = ImmutableList.builder();
+    }
 	
 	public AwsHttpRequest(final HttpRequestBase request) {
 		this(request, null);
@@ -75,7 +73,8 @@ public final class AwsHttpRequest {
 		return resource_;
 	}
 	
-	public void addHeader(final String name, final String value) {
+	public void addHeader(final String name,
+                          final String value) {
 		checkNotNull(name, "The header name cannot be null.");
 		checkNotNull(value, "The header value cannot be null.");
 		request_.addHeader(name, value);
@@ -87,16 +86,18 @@ public final class AwsHttpRequest {
 	
 	public void addParameter(final SortableBasicNameValuePair pair) {
 		checkNotNull(pair, "The name-value pair cannot be null.");
-		params_.add(pair);
+        paramBuilder_.add(pair);
 	}
 	
-	public void addParameter(final String name, final String value) {
+	public void addParameter(final String name,
+                             final String value) {
 		checkNotNull(name, "The pair name cannot be null.");
 		checkNotNull(value, "The pair value cannot be null.");
 		addParameter(new SortableBasicNameValuePair(name, value));
 	}
 	
-	public void addParameterOpt(final String name, final String value) {
+	public void addParameterOpt(final String name,
+                                final String value) {
 		if(name != null && value != null) {
 			addParameter(name, value);
 		}
@@ -107,7 +108,7 @@ public final class AwsHttpRequest {
 	 * @return
 	 */
 	public List<SortableBasicNameValuePair> getParameters() {
-		return unmodifiableList(params_);
+        return paramBuilder_.build();
 	}
 
 }

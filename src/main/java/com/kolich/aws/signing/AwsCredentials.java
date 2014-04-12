@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -35,27 +35,26 @@ public final class AwsCredentials {
 	private final String key_;
 	private final String secret_;
 	
-	public AwsCredentials(final String key, final String secret) {
-		checkNotNull(key, "AWS API key cannot be null.");
-		checkNotNull(secret, "AWS API secret cannot be null.");
-		key_ = key;
-		secret_ = secret;
+	public AwsCredentials(final String key,
+                          final String secret) {
+		key_ = checkNotNull(key, "AWS API key cannot be null.");
+		secret_ = checkNotNull(secret, "AWS API secret cannot be null.");
 	}
 	
-	public String getKey() {
+	public final String getKey() {
 		return key_;
 	}
 	
-	public String getSecret() {
+	public final String getSecret() {
 		return secret_;
 	}
 	
-	public byte[] getSecretBytes() {
+	public final byte[] getSecretBytes() {
 		return getBytesUtf8(secret_);
 	}
 	
 	@Override
-	public String toString() {
+	public final String toString() {
     	return String.format("%s(%s, %s)",
     		getClass().getSimpleName(),
     		key_, abbreviate(secret_, 10));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -27,17 +27,15 @@
 import sbt._
 import sbt.Keys._
 
-import com.typesafe.sbteclipse.plugin.EclipsePlugin._
-
 object Dependencies {
   
   // Internal dependencies.
 
-  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "1.2.2" % "compile"
+  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "2.1" % "compile"
   
   // External dependencies.
   
-  private val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.4.5" % "compile" intransitive()
+  private val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.5" % "compile" intransitive()
   private val commonsLang3 = "org.apache.commons" % "commons-lang3" % "3.1" % "compile" 
 
   val deps = Seq(kolichHttpClient4Closure, awsJavaSdk, commonsLang3)
@@ -46,7 +44,7 @@ object Dependencies {
 
 object Resolvers {
 
-  private val kolichRepo = "Kolich repo" at "http://markkolich.github.com/repo"
+  private val kolichRepo = "Kolich repo" at "http://markkolich.github.io/repo"
 
   val depResolvers = Seq(kolichRepo)
 
@@ -58,7 +56,7 @@ object Aws extends Build {
   import Resolvers._
 
   private val aName = "kolich-aws"
-  private val aVer = "0.1"
+  private val aVer = "0.2"
   private val aOrg = "com.kolich"
 
   lazy val kolichAws: Project = Project(
@@ -67,7 +65,7 @@ object Aws extends Build {
     settings = Defaults.defaultSettings ++ Seq(resolvers := depResolvers) ++ Seq(
       version := aVer,
       organization := aOrg,
-      scalaVersion := "2.10.1",
+      scalaVersion := "2.10.2",
       javacOptions ++= Seq("-Xlint", "-g"),
       shellPrompt := { (state: State) => { "%s:%s> ".format(aName, aVer) } },
       // True to export the packaged JAR instead of just the compiled .class files.
@@ -123,12 +121,7 @@ object Aws extends Build {
         file("dist") / "test" / defaultPath.getName
       },
       libraryDependencies ++= deps,
-      retrieveManaged := true) ++
-      Seq(EclipseKeys.createSrc := EclipseCreateSrc.Default,
-        // Make sure SBT also fetches/loads the "src" (source) JAR's for
-        // all declared dependencies.
-        EclipseKeys.withSource := true,
-        // This is a Java project, only.
-        EclipseKeys.projectFlavor := EclipseProjectFlavor.Java))
+      retrieveManaged := true)
+  )
 
 }

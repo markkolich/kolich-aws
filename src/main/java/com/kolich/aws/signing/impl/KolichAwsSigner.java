@@ -1,15 +1,41 @@
+/**
+ * Copyright (c) 2014 Mark S. Kolich
+ * http://mark.koli.ch
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package com.kolich.aws.signing.impl;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.kolich.common.util.crypt.Base64Utils.encodeBase64ToString;
-import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import com.kolich.aws.KolichAwsException;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.kolich.common.util.crypt.Base64Utils.encodeBase64ToString;
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 
 public final class KolichAwsSigner implements AwsSigner {
 	
@@ -25,8 +51,8 @@ public final class KolichAwsSigner implements AwsSigner {
 	}
 
 	@Override
-	public String sign(final AwsCredentials credentials,
-		final String input) {
+	public final String sign(final AwsCredentials credentials,
+                             final String input) {
 		try {
 			final String algoName = algorithm_.toString();
 			// Get a new instance of the HMAC-SHA1 algorithm.
@@ -43,12 +69,12 @@ public final class KolichAwsSigner implements AwsSigner {
 	}
 	
 	@Override
-	public AwsSigningAlgorithm getAlgorithm() {
+	public final AwsSigningAlgorithm getAlgorithm() {
 		return algorithm_;
 	}
 	
 	@Override
-	public String toString() {
+	public final String toString() {
     	return String.format("%s(%s)",
     		getClass().getSimpleName(),
     		algorithm_.toString());

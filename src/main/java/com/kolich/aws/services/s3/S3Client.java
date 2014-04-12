@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,13 +26,6 @@
 
 package com.kolich.aws.services.s3;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-
-import org.apache.http.Header;
-import org.apache.http.entity.ContentType;
-
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectResult;
@@ -40,9 +33,15 @@ import com.kolich.common.functional.either.Either;
 import com.kolich.common.functional.option.Option;
 import com.kolich.common.util.URLEncodingUtils;
 import com.kolich.http.common.response.HttpFailure;
+import org.apache.http.Header;
+import org.apache.http.entity.ContentType;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
 
 public interface S3Client {
-		
+
 	/**
 	 * List all buckets.
 	 * @return a list of {@link Bucket} objects
@@ -63,10 +62,11 @@ public interface S3Client {
 	 * path to a key in the bucket
 	 */
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
-		final String marker, final String... path);
+                                                         final String marker,
+                                                         final String... path);
 	
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName,
-		final String marker);
+                                                         final String marker);
 	
 	public Either<HttpFailure,ObjectListing> listObjects(final String bucketName);
 	
@@ -87,8 +87,7 @@ public interface S3Client {
 	/**
 	 * Put an object into a bucket.
 	 * @param bucketName the name of the bucket
-	 * @param type the {@link AwsContentType} of the object
-	 * @param object the byte[] array representing the object iself
+	 * @param type the {@link ContentType} of the object     *
 	 * @param rrs set to true to suggest the storage engine use
 	 * reduced redundancy storage mode. Set to false to use a standard
 	 * storage mode
@@ -99,26 +98,37 @@ public interface S3Client {
 	 * about the object flushed to S3
 	 */
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final boolean rrs, final ContentType type, final InputStream input,
-		final long contentLength, final String... path);
+                                                         final boolean rrs,
+                                                         final ContentType type,
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path);
 	
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final ContentType type, final InputStream input,
-		final long contentLength, final String... path);
+                                                         final ContentType type,
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path);
 	
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final InputStream input, final long contentLength,
-		final String... path);
+                                                         final InputStream input,
+                                                         final long contentLength,
+                                                         final String... path);
 	
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final boolean rrs, final ContentType type, final byte[] object,
-		final String... path);
+                                                         final boolean rrs,
+                                                         final ContentType type,
+                                                         final byte[] object,
+                                                         final String... path);
 	
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final ContentType type, final byte[] object, final String... path);
+                                                         final ContentType type,
+                                                         final byte[] object,
+                                                         final String... path);
 	
 	public Either<HttpFailure,PutObjectResult> putObject(final String bucketName,
-		final byte[] object, final String... path);
+                                                         final byte[] object,
+                                                         final String... path);
 	
 	/**
 	 * Delete an object.
@@ -129,7 +139,7 @@ public interface S3Client {
 	 * path to a key in the bucket
 	 */
 	public Option<HttpFailure> deleteObject(final String bucketName,
-		final String... path);
+                                            final String... path);
 	
 	/**
 	 * Get an object.
@@ -139,10 +149,11 @@ public interface S3Client {
 	 * path to a key in the bucket
 	 */
 	public Either<HttpFailure,List<Header>> getObject(final String bucketName,
-		final OutputStream destination, final String... path);
+                                                      final OutputStream destination,
+                                                      final String... path);
 	
 	public Either<HttpFailure,byte[]> getObject(final String bucketName,
-		final String... path);
+                                                final String... path);
 		
 	/**
 	 * Check if an object exists.
@@ -154,6 +165,6 @@ public interface S3Client {
 	 * the bucket, false if it does not
 	 */
 	public boolean objectExists(final String bucketName,
-		final String... path);
+                                final String... path);
 	
 }

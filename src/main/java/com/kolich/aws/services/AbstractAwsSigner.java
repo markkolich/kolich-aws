@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,13 +26,12 @@
 
 package com.kolich.aws.services;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import org.apache.http.client.methods.HttpRequestBase;
-
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
 import com.kolich.aws.transport.AwsHttpRequest;
+import org.apache.http.client.methods.HttpRequestBase;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class AbstractAwsSigner {
 	
@@ -48,11 +47,9 @@ public abstract class AbstractAwsSigner {
 	protected final AwsSigner signer_;
 	
 	public AbstractAwsSigner(final AwsCredentials credentials,
-		final AwsSigner signer) {
-		checkNotNull(credentials, "AWS credentials cannot be null.");
-		checkNotNull(signer, "AWS signer cannot be null.");
-		credentials_ = credentials;
-		signer_ = signer;
+                             final AwsSigner signer) {
+        credentials_ = checkNotNull(credentials, "AWS credentials cannot be null.");
+        signer_ = checkNotNull(signer, "AWS signer cannot be null.");
 	}
 	
 	/**
