@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,23 +26,6 @@
 
 package com.kolich.aws.services.sqs.impl;
 
-import static com.amazonaws.ResponseMetadata.AWS_REQUEST_ID;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.kolich.aws.services.sqs.SQSRegion.DEFAULT;
-import static java.util.regex.Pattern.compile;
-import static javax.xml.stream.XMLInputFactory.newInstance;
-import static org.apache.http.HttpStatus.SC_OK;
-
-import java.net.URI;
-import java.util.regex.Pattern;
-
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
-
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
@@ -64,8 +47,24 @@ import com.kolich.common.functional.option.Option;
 import com.kolich.common.functional.option.Some;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestBase;
 
-public final class KolichSQSClient extends AbstractAwsService implements SQSClient {
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import java.net.URI;
+import java.util.regex.Pattern;
+
+import static com.amazonaws.ResponseMetadata.AWS_REQUEST_ID;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.kolich.aws.services.sqs.SQSRegion.DEFAULT;
+import static java.util.regex.Pattern.compile;
+import static javax.xml.stream.XMLInputFactory.newInstance;
+import static org.apache.http.HttpStatus.SC_OK;
+
+public final class KolichSQSClient extends AbstractAwsService
+    implements SQSClient {
 	    
     /**
      * SQS visibility timeouts can only be at most 43200 seconds (12-hours).
@@ -111,29 +110,35 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
     private final HttpClient client_;
 	
 	public KolichSQSClient(final HttpClient client,
-		final AbstractAwsSigner signer, final SQSRegion region) {
+                           final AbstractAwsSigner signer,
+                           final SQSRegion region) {
 		super(signer, region.getApiEndpoint());
 		client_ = client;
 	}
 	
-	public KolichSQSClient(final HttpClient client, final String key,
-		final String secret, final SQSRegion region) {
+	public KolichSQSClient(final HttpClient client,
+                           final String key,
+                           final String secret,
+                           final SQSRegion region) {
 		this(client, new KolichSQSSigner(key, secret), region);
 	}
 	
-	public KolichSQSClient(final HttpClient client, final String key,
-		final String secret) {
+	public KolichSQSClient(final HttpClient client,
+                           final String key,
+                           final String secret) {
 		this(client, key, secret, DEFAULT);
 	}
 	
 	private abstract class AwsSQSHttpClosure<S> extends AwsBaseHttpClosure<S> {
 		private final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller_;
-		public AwsSQSHttpClosure(final HttpClient client, final int expectStatus,
-			final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller) {
+		public AwsSQSHttpClosure(final HttpClient client,
+                                 final int expectStatus,
+                                 final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller) {
 			super(client, expectStatus);
 			unmarshaller_ = unmarshaller;
 		}
-		public AwsSQSHttpClosure(final HttpClient client, final int expectStatus) {
+		public AwsSQSHttpClosure(final HttpClient client,
+                                 final int expectStatus) {
 			this(client, expectStatus, null);
 		}
 		@Override
@@ -193,8 +198,8 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 
 	@Override
-	public Either<HttpFailure,CreateQueueResult> createQueue(
-		final String queueName, final Integer defaultVisibilityTimeout) {
+	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName,
+                                                             final Integer defaultVisibilityTimeout) {
 		return new AwsSQSHttpClosure<CreateQueueResult>(client_, SC_OK,
 			new CreateQueueResultStaxUnmarshaller()) {
 			@Override
@@ -221,8 +226,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 	
 	@Override
-	public Either<HttpFailure,CreateQueueResult> createQueue(
-		final String queueName) {
+	public Either<HttpFailure,CreateQueueResult> createQueue(final String queueName) {
 		return createQueue(queueName, null);
 	}
 
@@ -242,7 +246,7 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 
 	@Override
 	public Either<HttpFailure,SendMessageResult> sendMessage(final URI queueURI,
-		final String message) {
+                                                             final String message) {
 		return new AwsSQSHttpClosure<SendMessageResult>(client_, SC_OK,
 			new SendMessageResultStaxUnmarshaller()) {
 			@Override
@@ -259,9 +263,9 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 
 	@Override
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI, final Integer longPollWaitSecs,
-		final Integer maxNumberOfMessages) {
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI,
+                                                                   final Integer longPollWaitSecs,
+                                                                   final Integer maxNumberOfMessages) {
 		return new AwsSQSHttpClosure<ReceiveMessageResult>(client_, SC_OK,
 			new ReceiveMessageResultStaxUnmarshaller()) {
 			@Override
@@ -294,20 +298,19 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 	}
 	
 	@Override
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI, final Integer longPollWaitSecs) {
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI,
+                                                                   final Integer longPollWaitSecs) {
 		return receiveMessage(queueURI, longPollWaitSecs, null);
 	}
 	
 	@Override
-	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(
-		final URI queueURI) {
+	public Either<HttpFailure,ReceiveMessageResult> receiveMessage(final URI queueURI) {
 		return receiveMessage(queueURI, null);
 	}
 
 	@Override
 	public Option<HttpFailure> deleteMessage(final URI queueURI,
-		final String receiptHandle) {
+                                             final String receiptHandle) {
 		return new AwsSQSHttpClosure<Void>(client_, SC_OK) {
 			@Override
 			public void validate() throws Exception {
@@ -325,7 +328,8 @@ public final class KolichSQSClient extends AbstractAwsService implements SQSClie
 
 	@Override
 	public Option<HttpFailure> changeMessageVisibility(final URI queueURI,
-		final String receiptHandle, final Integer visibilityTimeout) {
+                                                       final String receiptHandle,
+                                                       final Integer visibilityTimeout) {
 		return new AwsSQSHttpClosure<Void>(client_, SC_OK) {
 			@Override
 			public void validate() throws Exception {

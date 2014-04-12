@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,14 +26,14 @@
 
 package com.kolich.aws.transport;
 
-import static java.util.Collections.sort;
-import static java.util.Collections.unmodifiableList;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.collect.Lists;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
+
+import java.util.List;
+
+import static java.util.Collections.sort;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * AWS requires that we sort request parameters for signing. By default,
@@ -45,7 +45,8 @@ public final class SortableBasicNameValuePair extends BasicNameValuePair
 
 	private static final long serialVersionUID = -3515848847409095067L;
 
-	public SortableBasicNameValuePair(final String name, final String value) {
+	public SortableBasicNameValuePair(final String name,
+                                      final String value) {
 		super(name, value);
 	}
 	
@@ -54,11 +55,9 @@ public final class SortableBasicNameValuePair extends BasicNameValuePair
 		return getName().compareTo(s.getName());
 	}
 
-	public static final List<SortableBasicNameValuePair> sortParams(
-    	final List<NameValuePair> params) {
-    	final List<SortableBasicNameValuePair> sortable =
-    		new ArrayList<SortableBasicNameValuePair>();
-    	for(final NameValuePair pair : params) {
+	public static final List<SortableBasicNameValuePair> sortParams(final List<NameValuePair> params) {
+    	final List<SortableBasicNameValuePair> sortable = Lists.newArrayList();
+        for(final NameValuePair pair : params) {
     		sortable.add(new SortableBasicNameValuePair(
     			pair.getName(), pair.getValue()));
     	}

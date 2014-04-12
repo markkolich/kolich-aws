@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,20 +26,20 @@
 
 package com.kolich.aws.services.ses;
 
-import static java.net.URI.create;
-
 import java.net.URI;
+
+import static java.net.URI.create;
 
 public enum SESRegion {
 	
 	US_EAST("email.us-east-1.amazonaws.com");
 	
-	private URI regionUri_;
+	private final URI regionUri_;
 	private SESRegion(final String regionUri) {
 		regionUri_ = create(regionUri);
 	}
 	
-	public String getApiEndpoint() {
+	public final String getApiEndpoint() {
 		return regionUri_.toString();
 	}
 

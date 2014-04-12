@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,17 +26,16 @@
 
 package com.kolich.aws.services;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.net.URI;
-
+import com.kolich.aws.KolichAwsException;
+import com.kolich.aws.transport.AwsHttpRequest;
+import com.kolich.http.helpers.definitions.OrHttpFailureClosure;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.HttpContext;
 
-import com.kolich.aws.KolichAwsException;
-import com.kolich.aws.transport.AwsHttpRequest;
-import com.kolich.http.blocking.helpers.definitions.OrHttpFailureClosure;
+import java.net.URI;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class AbstractAwsService {
 	
@@ -52,28 +51,26 @@ public abstract class AbstractAwsService {
 	
 	protected abstract class AwsBaseHttpClosure<S> extends OrHttpFailureClosure<S> {
 		private final int expectStatus_;
-		public AwsBaseHttpClosure(final HttpClient client, final int expectStatus) {
+		public AwsBaseHttpClosure(final HttpClient client,
+                                  final int expectStatus) {
 			super(client);
 			expectStatus_ = expectStatus;
 		}
 		@Override
 		public boolean check(final HttpResponse response,
-			final HttpContext context) {
+                             final HttpContext context) {
 			return expectStatus_ == response.getStatusLine().getStatusCode();
 		}
 	}
 	
 	public AbstractAwsService(final AbstractAwsSigner signer,
-		final String apiEndpoint) {
-		checkNotNull(signer, "The signer cannot be null!");
-		checkNotNull(apiEndpoint, "The service client API endpoint " +
-			"cannot be null!");
-		signer_ = signer;
-		apiEndpoint_ = getApiEndpoint(apiEndpoint);
+                              final String apiEndpoint) {
+        signer_ = checkNotNull(signer, "The signer cannot be null!");
+        apiEndpoint_ = getApiEndpoint(checkNotNull(apiEndpoint, "The service " +
+            "client API endpoint cannot be null!"));
 	}
 	
 	private final URI getApiEndpoint(String apiEndPoint) {
-		checkNotNull(apiEndPoint, "Endpoint URL or authority cannot be null!");
 		// If the communication endpoint does not start with https://
 		// then we assume that we need to add it.
 		if(!apiEndPoint.startsWith(HTTPS)) {
@@ -82,7 +79,7 @@ public abstract class AbstractAwsService {
 			// Our communication endpoint can only be HTTPS.
 			throw new KolichAwsException("Oops! AWS endpoints must start " +
 				"with " + HTTPS + " but you gave me something else: " +
-					apiEndPoint);
+                apiEndPoint);
 		}
 		// Create our endpoint URI.
 		return URI.create(apiEndPoint);

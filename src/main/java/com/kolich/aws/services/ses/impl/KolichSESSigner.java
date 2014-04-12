@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,24 +26,23 @@
 
 package com.kolich.aws.services.ses.impl;
 
-import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA256;
-import static com.kolich.aws.transport.AwsHeaders.X_AMZN_AUTHORIZATION;
-import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.apache.http.HttpHeaders.DATE;
-import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
-
-import java.util.Date;
-
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
 import com.kolich.aws.signing.impl.KolichAwsSigner;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.common.date.RFC822DateFormat;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+
+import java.util.Date;
+
+import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA256;
+import static com.kolich.aws.transport.AwsHeaders.X_AMZN_AUTHORIZATION;
+import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpHeaders.DATE;
+import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 
 public final class KolichSESSigner extends AbstractAwsSigner {
 	
@@ -56,7 +55,7 @@ public final class KolichSESSigner extends AbstractAwsSigner {
 	private static final String SES_SIGNATURE = "Signature";
 	
 	public KolichSESSigner(final AwsCredentials credentials,
-		final AwsSigner signer) {
+                           final AwsSigner signer) {
 		super(credentials, signer);
 	}
 	
@@ -64,13 +63,13 @@ public final class KolichSESSigner extends AbstractAwsSigner {
 		this(credentials, new KolichAwsSigner(HmacSHA256));
 	}
 	
-	public KolichSESSigner(final String key, final String secret) {
+	public KolichSESSigner(final String key,
+                           final String secret) {
 		this(new AwsCredentials(key, secret));
 	}
 
 	@Override
-	public void signHttpRequest(final AwsHttpRequest request)
-		throws Exception {
+	public void signHttpRequest(final AwsHttpRequest request) throws Exception {
 		final String date = RFC822DateFormat.format(new Date());
 		// Create a Date header to be used in the request.
 		request.addHeader(DATE, date);
