@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,23 +26,18 @@
 
 package com.kolich.aws;
 
-import java.net.URI;
-import java.util.Date;
-
-import org.apache.http.client.HttpClient;
-
-import com.amazonaws.services.sqs.model.CreateQueueResult;
-import com.amazonaws.services.sqs.model.ListQueuesResult;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.amazonaws.services.sqs.model.*;
 import com.kolich.aws.services.sqs.SQSClient;
 import com.kolich.aws.services.sqs.impl.KolichSQSClient;
 import com.kolich.common.date.ISO8601DateFormat;
 import com.kolich.common.functional.either.Either;
 import com.kolich.common.functional.option.Option;
-import com.kolich.http.blocking.KolichDefaultHttpClient.KolichHttpClientFactory;
+import com.kolich.http.KolichDefaultHttpClient.KolichHttpClientFactory;
 import com.kolich.http.common.response.HttpFailure;
+import org.apache.http.client.HttpClient;
+
+import java.net.URI;
+import java.util.Date;
 
 public class SQSTest {
 	

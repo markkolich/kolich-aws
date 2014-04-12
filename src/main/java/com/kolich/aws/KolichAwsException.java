@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -32,15 +32,16 @@ public class KolichAwsException extends KolichCommonException {
 
 	private static final long serialVersionUID = -5593611166490432655L;
 
-	public KolichAwsException(String message, Throwable cause) {
+	public KolichAwsException(final String message,
+                              final Throwable cause) {
 		super(message, cause);
 	}
 	
-	public KolichAwsException(Throwable cause) {
+	public KolichAwsException(final Throwable cause) {
 		super(cause);
 	}
 	
-	public KolichAwsException(String message) {
+	public KolichAwsException(final String message) {
 		super(message);
 	}
 

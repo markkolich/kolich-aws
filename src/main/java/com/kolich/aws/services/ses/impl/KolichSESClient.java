@@ -26,40 +26,8 @@
 
 package com.kolich.aws.services.ses.impl;
 
-import static com.amazonaws.ResponseMetadata.AWS_REQUEST_ID;
-import static com.amazonaws.util.StringUtils.fromByteBuffer;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.kolich.aws.services.ses.SESRegion.US_EAST;
-import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
-import static java.util.regex.Pattern.compile;
-import static javax.xml.stream.XMLInputFactory.newInstance;
-import static org.apache.http.HttpStatus.SC_OK;
-
-import java.util.List;
-import java.util.regex.Pattern;
-
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
-
-import com.amazonaws.services.simpleemail.model.Body;
-import com.amazonaws.services.simpleemail.model.Content;
-import com.amazonaws.services.simpleemail.model.Destination;
-import com.amazonaws.services.simpleemail.model.GetSendQuotaResult;
-import com.amazonaws.services.simpleemail.model.GetSendStatisticsResult;
-import com.amazonaws.services.simpleemail.model.ListVerifiedEmailAddressesResult;
-import com.amazonaws.services.simpleemail.model.Message;
-import com.amazonaws.services.simpleemail.model.RawMessage;
-import com.amazonaws.services.simpleemail.model.SendEmailResult;
-import com.amazonaws.services.simpleemail.model.SendRawEmailResult;
-import com.amazonaws.services.simpleemail.model.transform.GetSendQuotaResultStaxUnmarshaller;
-import com.amazonaws.services.simpleemail.model.transform.GetSendStatisticsResultStaxUnmarshaller;
-import com.amazonaws.services.simpleemail.model.transform.ListVerifiedEmailAddressesResultStaxUnmarshaller;
-import com.amazonaws.services.simpleemail.model.transform.SendEmailResultStaxUnmarshaller;
-import com.amazonaws.services.simpleemail.model.transform.SendRawEmailResultStaxUnmarshaller;
+import com.amazonaws.services.simpleemail.model.*;
+import com.amazonaws.services.simpleemail.model.transform.*;
 import com.amazonaws.transform.StaxUnmarshallerContext;
 import com.amazonaws.transform.Unmarshaller;
 import com.kolich.aws.services.AbstractAwsService;
@@ -73,8 +41,26 @@ import com.kolich.common.functional.option.Option;
 import com.kolich.common.functional.option.Some;
 import com.kolich.http.common.response.HttpFailure;
 import com.kolich.http.common.response.HttpSuccess;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestBase;
 
-public final class KolichSESClient extends AbstractAwsService implements SESClient {
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.amazonaws.ResponseMetadata.AWS_REQUEST_ID;
+import static com.amazonaws.util.StringUtils.fromByteBuffer;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static com.kolich.aws.services.ses.SESRegion.US_EAST;
+import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
+import static java.util.regex.Pattern.compile;
+import static javax.xml.stream.XMLInputFactory.newInstance;
+import static org.apache.http.HttpStatus.SC_OK;
+
+public final class KolichSESClient extends AbstractAwsService
+    implements SESClient {
 	
 	private static final String SES_ACTION_PARAM = "Action";
     private static final String SES_EMAILADDRESS_PARAM = "EmailAddress";
@@ -109,29 +95,35 @@ public final class KolichSESClient extends AbstractAwsService implements SESClie
 	private final HttpClient client_;
 	
 	public KolichSESClient(final HttpClient client,
-		final AbstractAwsSigner signer, final SESRegion region) {
+                           final AbstractAwsSigner signer,
+                           final SESRegion region) {
 		super(signer, region.getApiEndpoint());
 		client_ = client;
 	}
 	
-	public KolichSESClient(final HttpClient client, final String key,
-		final String secret, final SESRegion region) {
+	public KolichSESClient(final HttpClient client,
+                           final String key,
+                           final String secret,
+                           final SESRegion region) {
 		this(client, new KolichSESSigner(key, secret), region);
 	}
 	
-	public KolichSESClient(final HttpClient client, final String key,
-		final String secret) {
+	public KolichSESClient(final HttpClient client,
+                           final String key,
+                           final String secret) {
 		this(client, new KolichSESSigner(key, secret), US_EAST);
 	}
 	
 	private abstract class AwsSESHttpClosure<S> extends AwsBaseHttpClosure<S> {
 		private final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller_;
-		public AwsSESHttpClosure(final HttpClient client, final int expectStatus,
-			final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller) {
+		public AwsSESHttpClosure(final HttpClient client,
+                                 final int expectStatus,
+                                 final Unmarshaller<S,StaxUnmarshallerContext> unmarshaller) {
 			super(client, expectStatus);
 			unmarshaller_ = unmarshaller;
 		}
-		public AwsSESHttpClosure(final HttpClient client, final int expectStatus) {
+		public AwsSESHttpClosure(final HttpClient client,
+                                 final int expectStatus) {
 			this(client, expectStatus, null);
 		}
 		@Override
@@ -197,8 +189,7 @@ public final class KolichSESClient extends AbstractAwsService implements SESClie
 	}
 
 	@Override
-	public Option<HttpFailure> deleteVerifiedEmailAddress(
-		final String emailAddress) {
+	public Option<HttpFailure> deleteVerifiedEmailAddress(final String emailAddress) {
 		return new AwsSESHttpClosure<Void>(client_, SC_OK) {
 			@Override
 			public void validate() throws Exception {
@@ -253,8 +244,10 @@ public final class KolichSESClient extends AbstractAwsService implements SESClie
 
 	@Override
 	public Either<HttpFailure,SendEmailResult> sendEmail(final String from,
-		final String to, final String returnPath, final String subject,
-		final String body) {
+                                                         final String to,
+                                                         final String returnPath,
+                                                         final String subject,
+                                                         final String body) {
 		return sendEmail(
 			// A single TO: destination address
 			new Destination().withToAddresses(to),
@@ -273,10 +266,11 @@ public final class KolichSESClient extends AbstractAwsService implements SESClie
 	}
 
 	@Override
-	public Either<HttpFailure,SendEmailResult> sendEmail(
-		final Destination destination, final Message message,
-		final List<String> replyToAddresses, final String returnPath,
-		final String from) {
+	public Either<HttpFailure,SendEmailResult> sendEmail(final Destination destination,
+                                                         final Message message,
+                                                         final List<String> replyToAddresses,
+                                                         final String returnPath,
+                                                         final String from) {
 		return new AwsSESHttpClosure<SendEmailResult>(client_,
 			SC_OK, new SendEmailResultStaxUnmarshaller()) {
 			@Override
@@ -348,9 +342,9 @@ public final class KolichSESClient extends AbstractAwsService implements SESClie
 	}
 
 	@Override
-	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(
-		final RawMessage message, final String from,
-		final List<String> destinations) {
+	public Either<HttpFailure,SendRawEmailResult> sendRawEmail(final RawMessage message,
+                                                               final String from,
+                                                               final List<String> destinations) {
 		return new AwsSESHttpClosure<SendRawEmailResult>(client_,
 			SC_OK, new SendRawEmailResultStaxUnmarshaller()) {
 			@Override

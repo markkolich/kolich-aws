@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -36,7 +36,8 @@ public interface AwsSigner {
 	 * AWS access key and access key secret live
 	 * @param input the input String to sign
 	 */
-	public String sign(final AwsCredentials credentials, final String input);
+	public String sign(final AwsCredentials credentials,
+                       final String input);
 	
 	/**
 	 * Returns the underlying signing algorithm used by this signer

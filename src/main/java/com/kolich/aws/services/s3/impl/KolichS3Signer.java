@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Mark S. Kolich
+ * Copyright (c) 2014 Mark S. Kolich
  * http://mark.koli.ch
  *
  * Permission is hereby granted, free of charge, to any person
@@ -26,33 +26,8 @@
 
 package com.kolich.aws.services.s3.impl;
 
-import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA1;
-import static com.kolich.aws.transport.AwsHeaders.AMAZON_PREFIX;
-import static com.kolich.aws.transport.AwsHeaders.S3_ALTERNATE_DATE;
-import static com.kolich.aws.transport.SortableBasicNameValuePair.sortParams;
-import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
-import static java.util.Collections.unmodifiableMap;
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR_UNIX;
-import static org.apache.http.HttpHeaders.AUTHORIZATION;
-import static org.apache.http.HttpHeaders.CONTENT_MD5;
-import static org.apache.http.HttpHeaders.CONTENT_TYPE;
-import static org.apache.http.HttpHeaders.DATE;
-import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-import org.apache.http.Header;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.kolich.aws.services.AbstractAwsSigner;
 import com.kolich.aws.signing.AwsCredentials;
 import com.kolich.aws.signing.AwsSigner;
@@ -60,6 +35,20 @@ import com.kolich.aws.signing.impl.KolichAwsSigner;
 import com.kolich.aws.transport.AwsHttpRequest;
 import com.kolich.aws.transport.SortableBasicNameValuePair;
 import com.kolich.common.date.RFC822DateFormat;
+import org.apache.http.Header;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
+import java.util.*;
+
+import static com.kolich.aws.signing.impl.KolichAwsSigner.AwsSigningAlgorithm.HmacSHA1;
+import static com.kolich.aws.transport.AwsHeaders.AMAZON_PREFIX;
+import static com.kolich.aws.transport.AwsHeaders.S3_ALTERNATE_DATE;
+import static com.kolich.aws.transport.SortableBasicNameValuePair.sortParams;
+import static com.kolich.common.DefaultCharacterEncoding.UTF_8;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR_UNIX;
+import static org.apache.http.HttpHeaders.*;
+import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 
 public final class KolichS3Signer extends AbstractAwsSigner {
 	
@@ -67,7 +56,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
 		APPLICATION_FORM_URLENCODED.toString();
 	
 	public KolichS3Signer(final AwsCredentials credentials,
-		final AwsSigner signer) {
+                          final AwsSigner signer) {
 		super(credentials, signer);
 	}
 	
@@ -75,7 +64,8 @@ public final class KolichS3Signer extends AbstractAwsSigner {
 		this(credentials, new KolichAwsSigner(HmacSHA1));
 	}
 	
-	public KolichS3Signer(final String key, final String secret) {
+	public KolichS3Signer(final String key,
+                          final String secret) {
 		this(new AwsCredentials(key, secret));
 	}
 
@@ -86,15 +76,15 @@ public final class KolichS3Signer extends AbstractAwsSigner {
      * does not make very clear upfront.
      */
     private static final List<String> INTERESTING_PARAMETERS =
-    	Arrays.asList(new String[]{
+    	Arrays.asList(
     		"acl", "torrent", "logging", "location", "policy",
     		"requestPayment", "versioning", "versions", "versionId",
     		"notification"
-    	});
+        );
     
     @Override
-	public void signHttpRequest(final AwsHttpRequest request)
-		throws Exception {
+	public final void signHttpRequest(final AwsHttpRequest request)
+        throws Exception {
     	// Add a Date header to the request.
     	request.addHeader(DATE, RFC822DateFormat.format(new Date()));
     	// Only add a Content-Type header to the request if one is not
@@ -119,8 +109,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
 	/**
      * Calculate the canonical string for a REST/HTTP request to S3.
      */
-    private static final String getS3CanonicalString(
-    	final AwsHttpRequest request) {
+    private static final String getS3CanonicalString(final AwsHttpRequest request) {
     	// A few standard headers we extract for conveinence.
     	final String contentType = CONTENT_TYPE.toLowerCase(),
     		contentMd5 = CONTENT_MD5.toLowerCase(),
@@ -133,7 +122,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
         // "Interesting" is defined as Content-MD5, Content-Type, Date,
         // and x-amz-... headers.
         final Map<String,String> headersMap = getHeadersAsMap(request);
-        final SortedMap<String,String> interesting = new TreeMap<String,String>();
+        final SortedMap<String,String> interesting = Maps.newTreeMap();
         if(!headersMap.isEmpty()) {
             Iterator<Map.Entry<String,String>> it = headersMap.entrySet().iterator();
             while(it.hasNext()) {
@@ -142,7 +131,7 @@ public final class KolichS3Signer extends AbstractAwsSigner {
             	if(key == null) {
             		continue;
                 }
-            	final String lk = key.toString().toLowerCase(Locale.getDefault());
+            	final String lk = key.toLowerCase(Locale.getDefault());
             	// Ignore any headers that are not interesting.
             	if(lk.equals(contentType) || lk.equals(contentMd5) ||
             		lk.equals(date) || lk.startsWith(AMAZON_PREFIX)) {
@@ -210,17 +199,16 @@ public final class KolichS3Signer extends AbstractAwsSigner {
      * Given an HttpRequestBase, extracts a Map containing each header to
      * value pair.  The returned Map is unmodifiable.
      */
-    private static final Map<String, String> getHeadersAsMap(
-    	final AwsHttpRequest request) {
-    	final Map<String, String> map = new HashMap<String, String>();
-    	for(final Header h : request.getRequestBase().getAllHeaders()) {
+    private static final ImmutableMap<String,String> getHeadersAsMap(final AwsHttpRequest request) {
+    	final ImmutableMap.Builder<String,String> map = ImmutableMap.builder();
+        for(final Header h : request.getRequestBase().getAllHeaders()) {
     		map.put(h.getName(), h.getValue());
     	}
-    	return unmodifiableMap(map);
+    	return map.build();
     }
     
     @Override
-	public String toString() {
+	public final String toString() {
     	return String.format("%s(%s, %s)",
     		getClass().getSimpleName(),
     		credentials_.toString(), signer_.toString());

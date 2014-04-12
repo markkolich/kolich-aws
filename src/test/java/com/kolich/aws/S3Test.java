@@ -1,10 +1,30 @@
+/**
+ * Copyright (c) 2014 Mark S. Kolich
+ * http://mark.koli.ch
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package com.kolich.aws;
-
-import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
-
-import java.util.List;
-
-import org.apache.http.client.HttpClient;
 
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
@@ -14,8 +34,13 @@ import com.kolich.aws.services.s3.S3Client;
 import com.kolich.aws.services.s3.impl.KolichS3Client;
 import com.kolich.common.functional.either.Either;
 import com.kolich.common.functional.option.Option;
-import com.kolich.http.blocking.KolichDefaultHttpClient.KolichHttpClientFactory;
+import com.kolich.http.KolichDefaultHttpClient.KolichHttpClientFactory;
 import com.kolich.http.common.response.HttpFailure;
+import org.apache.http.client.HttpClient;
+
+import java.util.List;
+
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 
 public class S3Test {
 	
