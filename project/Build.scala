@@ -38,7 +38,11 @@ object Dependencies {
   private val awsJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.7.5" % "compile" intransitive()
   private val commonsLang3 = "org.apache.commons" % "commons-lang3" % "3.1" % "compile" 
 
-  val deps = Seq(kolichHttpClient4Closure, awsJavaSdk, commonsLang3)
+  val deps = Seq(
+    kolichHttpClient4Closure,
+    awsJavaSdk,
+    commonsLang3
+  )
 
 }
 
@@ -56,7 +60,7 @@ object Aws extends Build {
   import Resolvers._
 
   private val aName = "kolich-aws"
-  private val aVer = "0.2"
+  private val aVer = "0.3"
   private val aOrg = "com.kolich"
 
   lazy val kolichAws: Project = Project(

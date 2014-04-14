@@ -26,6 +26,7 @@
 
 package com.kolich.aws.services.s3.impl;
 
+import com.amazonaws.services.s3.internal.XmlWriter;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectResult;
@@ -47,6 +48,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 
@@ -58,6 +60,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.amazonaws.services.s3.internal.Constants.XML_NAMESPACE;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.kolich.aws.services.s3.S3Region.US_EAST;
@@ -97,12 +100,15 @@ public final class KolichS3Client extends AbstractAwsService
     	compile("\\A[a-z0-9]{1}[a-z0-9_\\-\\.]{1,253}[a-z0-9]{1}\\Z");
 	
 	private final HttpClient client_;
+
+    private final S3Region region_;
 	
 	public KolichS3Client(final HttpClient client,
                           final AbstractAwsSigner signer,
                           final S3Region region) {
 		super(signer, region.getApiEndpoint());
 		client_ = client;
+        region_ = region;
 	}
 	
 	public KolichS3Client(final HttpClient client,
@@ -246,6 +252,24 @@ public final class KolichS3Client extends AbstractAwsService
 	@Override
 	public Option<HttpFailure> createBucket(final String bucketName) {
     	return new AwsS3HttpClosure<Bucket>(client_, SC_OK, bucketName) {
+            @Override
+            public void prepare(final AwsHttpRequest request) throws Exception {
+                // https://github.com/markkolich/kolich-aws/issues/1
+                // Can only send the CreateBucketConfiguration if we're *not*
+                // creating a bucket in the US region.
+                final String regionId;
+                if((regionId = region_.getRegionId()) != null) {
+                    final XmlWriter xml = new XmlWriter();
+                    xml.start("CreateBucketConfiguration", "xmlns",
+                        XML_NAMESPACE);
+                    xml.start("LocationConstraint").value(regionId).end();
+                    xml.end();
+                    // Attach the XML entity to the request.
+                    final HttpRequestBase base = request.getRequestBase();
+                    ((HttpPut)base).setEntity(new ByteArrayEntity(
+                        xml.getBytes()));
+                }
+            }
     		@Override
 			public void validate() throws Exception {
 				checkNotNull(bucketName, "Bucket name cannot be null.");
@@ -257,7 +281,7 @@ public final class KolichS3Client extends AbstractAwsService
 
 	@Override
 	public Option<HttpFailure> deleteBucket(final String bucketName) {
-    	return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName){
+    	return new AwsS3HttpClosure<Void>(client_, SC_NO_CONTENT, bucketName) {
     		@Override
 			public void validate() throws Exception {
 				checkNotNull(bucketName, "Bucket name cannot be null.");
@@ -298,7 +322,8 @@ public final class KolichS3Client extends AbstractAwsService
 					contentLength));
 			}
 			@Override
-			public PutObjectResult success(final HttpSuccess success) throws Exception {
+			public PutObjectResult success(final HttpSuccess success)
+                throws Exception {
 				final PutObjectResult result = new PutObjectResult();
 				result.setETag(success.getETag());
 				result.setVersionId(success.getFirstHeader(S3_VERSION_ID));

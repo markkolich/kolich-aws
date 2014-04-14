@@ -32,23 +32,31 @@ import static java.net.URI.create;
 
 public enum S3Region {
 	
-	US_EAST("s3.amazonaws.com"),
+	US_EAST(null, "s3.amazonaws.com"),
+
+    US_WEST_NORCAL("us-west-1", "s3-us-west-1.amazonaws.com"),
+	US_WEST_OREGON("us-west-2", "s3-us-west-2.amazonaws.com"),
 	
-	US_WEST_OREGON("s3-us-west-2.amazonaws.com"),
-	US_WEST_NORCAL("s3-us-west-1.amazonaws.com"),
+	EU("eu-west-1", "s3-eu-west-1.amazonaws.com"),
 	
-	EU("s3-eu-west-1.amazonaws.com"),
+	ASIA_SINGAPORE("ap-southeast-1", "s3-ap-southeast-1.amazonaws.com"),
+	ASIA_SYDNEY("ap-southeast-2", "s3-ap-southeast-2.amazonaws.com"),
+
+	ASIA_TOKYO("ap-northeast-1", "s3-ap-northeast-1.amazonaws.com"),
 	
-	ASIA_SINGAPORE("s3-ap-southeast-1.amazonaws.com"),
-	ASIA_SYDNEY("s3-ap-southeast-2.amazonaws.com"),
-	ASIA_TOKYO("s3-ap-northeast-1.amazonaws.com"),
-	
-	SOUTH_AMERICA("s3-sa-east-1.amazonaws.com");
-	
+	SOUTH_AMERICA("sa-east-1", "s3-sa-east-1.amazonaws.com");
+
+    private final String regionId_;
 	private final URI regionUri_;
-	private S3Region(final String regionUri) {
+	private S3Region(final String regionId,
+                     final String regionUri) {
+        regionId_ = regionId;
 		regionUri_ = create(regionUri);
 	}
+
+    public final String getRegionId() {
+        return regionId_;
+    }
 	
 	public final String getApiEndpoint() {
 		return regionUri_.toString();

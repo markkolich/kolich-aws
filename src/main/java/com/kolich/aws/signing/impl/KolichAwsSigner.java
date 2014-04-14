@@ -46,8 +46,8 @@ public final class KolichAwsSigner implements AwsSigner {
 	private final AwsSigningAlgorithm algorithm_;
 	
 	public KolichAwsSigner(final AwsSigningAlgorithm algorithm) {
-		checkNotNull(algorithm, "Signing algorithm cannot be null.");
-		algorithm_ = algorithm;
+        algorithm_ = checkNotNull(algorithm, "Signing algorithm cannot " +
+            "be null.");
 	}
 
 	@Override

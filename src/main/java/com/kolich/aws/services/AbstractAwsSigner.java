@@ -48,7 +48,8 @@ public abstract class AbstractAwsSigner {
 	
 	public AbstractAwsSigner(final AwsCredentials credentials,
                              final AwsSigner signer) {
-        credentials_ = checkNotNull(credentials, "AWS credentials cannot be null.");
+        credentials_ = checkNotNull(credentials, "AWS credentials cannot " +
+            "be null.");
         signer_ = checkNotNull(signer, "AWS signer cannot be null.");
 	}
 	
