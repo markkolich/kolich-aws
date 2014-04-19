@@ -289,19 +289,19 @@ public final class KolichSESClient extends AbstractAwsService
 				for(int i = 0; i < destination.getToAddresses().size(); i++) {
 					final String to = destination.getToAddresses().get(i);
 					request.addParameterOpt(
-						String.format("%s.%s", SES_DESTINATION_TO_PARAM, i), to);
+						String.format("%s.%s", SES_DESTINATION_TO_PARAM, i+1), to);
 				}
 				// CC
 				for(int i = 0; i < destination.getCcAddresses().size(); i++) {
 					final String cc = destination.getCcAddresses().get(i);
 					request.addParameterOpt(
-						String.format("%s.%s", SES_DESTINATION_CC_PARAM, i), cc);
+						String.format("%s.%s", SES_DESTINATION_CC_PARAM, i+1), cc);
 				}
 				// BCC
 				for(int i = 0; i < destination.getBccAddresses().size(); i++) {
 					final String bcc = destination.getBccAddresses().get(i);
 					request.addParameterOpt(
-						String.format("%s.%s", SES_DESTINATION_BCC_PARAM, i), bcc);
+						String.format("%s.%s", SES_DESTINATION_BCC_PARAM, i+1), bcc);
 				}
 				// Subject
 				final Content subject;
@@ -332,7 +332,7 @@ public final class KolichSESClient extends AbstractAwsService
 					for(int i = 0; i < replyToAddresses.size(); i++) {
 						final String replyTo = replyToAddresses.get(i);
 						request.addParameterOpt(
-							String.format("%s.%s", SES_REPLY_TO_PARAM, i), replyTo);
+							String.format("%s.%s", SES_REPLY_TO_PARAM, i+1), replyTo);
 					}
 				}
 				// Return path
@@ -362,7 +362,7 @@ public final class KolichSESClient extends AbstractAwsService
 				for(int i = 0; i < destinations.size(); i++) {
 					final String destination = destinations.get(i);
 					request.addParameterOpt(
-						String.format("%s.%s", SES_DESTINATIONS_PARAM, i),
+						String.format("%s.%s", SES_DESTINATIONS_PARAM, i+1),
 							destination);
 				}
 				// Message body

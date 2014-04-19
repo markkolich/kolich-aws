@@ -60,7 +60,7 @@ object Aws extends Build {
   import Resolvers._
 
   private val aName = "kolich-aws"
-  private val aVer = "0.5"
+  private val aVer = "0.6"
   private val aOrg = "com.kolich"
 
   lazy val kolichAws: Project = Project(
