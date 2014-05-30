@@ -31,7 +31,7 @@ object Dependencies {
   
   // Internal dependencies.
 
-  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "2.3" % "compile"
+  private val kolichHttpClient4Closure = "com.kolich" % "kolich-httpclient4-closure" % "3.0" % "compile"
   
   // External dependencies.
   
@@ -60,7 +60,7 @@ object Aws extends Build {
   import Resolvers._
 
   private val aName = "kolich-aws"
-  private val aVer = "0.6"
+  private val aVer = "0.7"
   private val aOrg = "com.kolich"
 
   lazy val kolichAws: Project = Project(
